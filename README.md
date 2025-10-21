@@ -22,15 +22,16 @@ game-shop-cloud/
 
 ## 技术栈
 
-- **Spring Boot**: 3.3.3
-- **Spring Cloud**: 2023.0.3
-- **Spring Cloud Alibaba**: 2023.0.1.2
-- **Nacos**: 服务注册与配置中心
+- **Spring Boot**: 3.0.2
+- **Spring Cloud**: 2022.0.0
+- **Spring Cloud Alibaba**: 2022.0.0.0-RC2
+- **Nacos**: 2.2.2 (服务注册与配置中心)
 - **Gateway**: API网关
 - **OpenFeign**: 服务间调用
-- **MyBatis-Plus**: 持久层框架
-- **MySQL**: 8.0.35
-- **Lombok**: 简化代码
+- **MyBatis-Plus**: 3.5.7
+- **MySQL**: 8.0.33
+- **Lombok**: 1.18.30
+- **JDK**: 17
 
 ## 服务说明
 
@@ -95,10 +96,10 @@ game-shop-cloud/
 
 ### 前置要求
 
-1. **JDK 17+**
-2. **Maven 3.6+**
+1. **JDK 17**
+2. **Maven 3.8.1+**
 3. **MySQL 8.0+**
-4. **Nacos 2.x**
+4. **Nacos 2.2.2**
 5. **Python 3.10+** (可选，用于AI服务)
 6. **Ollama** (可选，用于AI聊天)
 

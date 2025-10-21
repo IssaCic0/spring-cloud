@@ -25,15 +25,15 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="game-shop-ai" options="-parameters" />
-      <module name="game-shop-api" options="-parameters" />
-      <module name="game-shop-common" options="-parameters" />
-      <module name="game-shop-gateway" options="-parameters" />
-      <module name="game-shop-order" options="-parameters" />
-      <module name="game-shop-payment" options="-parameters" />
-      <module name="game-shop-product" options="-parameters" />
-      <module name="game-shop-shop" options="-parameters" />
-      <module name="game-shop-system" options="-parameters" />
-      <module name="game-shop-user" options="-parameters" />
+      <module name="game-shop-api" options="" />
+      <module name="game-shop-common" options="" />
+      <module name="game-shop-gateway" options="" />
+      <module name="game-shop-order" options="" />
+      <module name="game-shop-payment" options="" />
+      <module name="game-shop-product" options="" />
+      <module name="game-shop-shop" options="" />
+      <module name="game-shop-system" options="" />
+      <module name="game-shop-user" options="" />
     </option>
   </component>
 </project>
