@@ -1,5 +1,7 @@
 # 智能游戏商城 - 微服务架构版
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/IssaCic0/spring-cloud)
+
 基于 Spring Cloud Alibaba 的智能游戏商城微服务架构项目
 
 ## 项目架构
