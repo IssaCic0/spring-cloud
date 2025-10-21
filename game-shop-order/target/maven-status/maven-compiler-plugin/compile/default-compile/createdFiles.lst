@@ -1,0 +1,12 @@
+com\baidu\order\mapper\OrderMapper.class
+com\baidu\order\service\impl\OrderServiceImpl.class
+com\baidu\order\entity\Order.class
+com\baidu\order\mapper\OrderItemMapper.class
+com\baidu\order\entity\OrderStatus.class
+com\baidu\order\OrderApplication8084.class
+com\baidu\order\controller\OrderController$OrderCreateRequest$Item.class
+com\baidu\order\entity\OrderItem.class
+com\baidu\order\controller\OrderController.class
+com\baidu\order\controller\OrderController$OrderCreateRequest.class
+com\baidu\order\controller\OrderController$UpdateShipStatusRequest.class
+com\baidu\order\service\OrderService.class

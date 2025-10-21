@@ -1,0 +1,108 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: game-shop-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # 用户服务
+        - id: user-service
+          uri: lb://game-shop-user
+          predicates:
+            - Path=/api/accounts/**
+          filters:
+            - StripPrefix=0
+
+        # 商品服务
+        - id: product-service
+          uri: lb://game-shop-product
+          predicates:
+            - Path=/api/products/**,/api/categories/**
+          filters:
+            - StripPrefix=0
+
+        # 店铺服务
+        - id: shop-service
+          uri: lb://game-shop-shop
+          predicates:
+            - Path=/api/shops/**
+          filters:
+            - StripPrefix=0
+
+        # 订单服务
+        - id: order-service
+          uri: lb://game-shop-order
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=0
+
+        # 支付服务
+        - id: payment-service
+          uri: lb://game-shop-payment
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - StripPrefix=0
+
+        # 系统服务 - 公告
+        - id: system-service
+          uri: lb://game-shop-system
+          predicates:
+            - Path=/api/announcements/**
+          filters:
+            - StripPrefix=0
+
+        # 系统服务 - 文件上传（API）
+        - id: files-service
+          uri: lb://game-shop-system
+          predicates:
+            - Path=/api/files/**
+          filters:
+            - StripPrefix=0
+
+        # 系统服务 - 静态上传文件（直接透传 /uploads/** 给系统服务静态资源处理）
+        - id: uploads-static
+          uri: lb://game-shop-system
+          predicates:
+            - Path=/uploads/**
+          filters:
+            - StripPrefix=0
+
+        # 系统服务 - AI 聊天
+        - id: ai-service
+          uri: lb://game-shop-system
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - StripPrefix=0
+
+        # 系统服务 - Python 可视化
+        - id: py-service
+          uri: lb://game-shop-system
+          predicates:
+            - Path=/api/py/**
+          filters:
+            - StripPrefix=0
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+

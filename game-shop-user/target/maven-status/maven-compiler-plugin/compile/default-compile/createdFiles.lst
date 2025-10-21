@@ -1,0 +1,12 @@
+com\baidu\user\service\impl\AccountServiceImpl.class
+com\baidu\user\controller\AccountController$RegisterRequest.class
+com\baidu\user\service\AccountService.class
+com\baidu\user\entity\User.class
+com\baidu\user\controller\AccountController$LoginRequest.class
+com\baidu\user\controller\AccountController.class
+com\baidu\user\controller\AccountController$ChangeRoleRequest.class
+com\baidu\user\UserApplication8081.class
+com\baidu\user\controller\AccountController$BanRequest.class
+com\baidu\user\mapper\UserMapper.class
+com\baidu\user\controller\AccountController$AdminCreateRequest.class
+com\baidu\user\controller\AccountController$AdminUpdateRequest.class

@@ -1,0 +1,745 @@
+=== 第 1 页 ===
+
+微服务阿里巴巴10：GateWay网关
+ 
+一、Spring Cloud GateWay组件
+ 
+1.1 网关简介
+ 
+微服务项目可能部署在不同机房，不同地区，不同域名（网址）下。此时客户端（浏览器/手机/软
+件工具）想要请求对应的服务，都需要知道机器的具体 IP 或者域名 URL，当微服务实例众多时，
+这是非常难以记忆的，对于客户端来说也太复杂难以维护。此时就有了网关，客户端相关的请求直
+接发送到网关，由网关根据请求标识解析判断出具体的微服务地址，再把请求转发到微服务实例。
+这其中的记忆功能就全部交由网关来操作了。
+ 
+这时候就会发现：只要按照网关地址/服务名称/接口的格式访问，就可以得到成功响应
+ 
+
+
+
+=== 第 2 页 ===
+
+1.2 GateWay相关概念
+ 
+1.2.1 核心概念
+ 
+路由（route） 路由是网关最核心部分，路由信息由一个id（自定义）、一个目的uri（配置需要
+转发的目标地址）、一组断言工厂（用于路由规则的匹配）和一组Filter（用于业务逻辑处理）组
+成。如果断言为真，则说明请求uri和配置的路由匹配。
+断言的主要作用是用通配的方式，将用户请求与断言进行匹配，如果匹配上，则跳转到对应的uri
+请求地址。
+过滤器Filter可以对请求和响应进行处理。
+http://localhost:9999/order/addOrder
+id: 自定义 order-web-router
+uri: http://localhost:8001
+断言: /order/**            /order/addOrder
+http://localhost:8001/order/addOrder
+1.2.2 注意事项
+ 
+Spring Cloud Gateway是由webFlux+Netty+Reactor实现的响应式的API网关，它不能在传统的
+servlet容器中工作，也不能构建成war包
+SpringCloud Gateway使用的web框架为webflux，和SpringMVC不兼容。可以整合sentinel。
+redis底层不再使用jedis，而是lettuce【[ˈletɪs]】。
+Spring Cloud Gateway的目的是为微服务架构提供一种简单且有效的API路由的管理方式，并基于
+Filter的方式提供网关的基本功能，例如安全认证，监控，限流等等。
+二、GateWay用法
+ 
+2.1 基础用法
+ 
+2.1.1 创建项目
+ 
+创建一个空的maven的module项目（项目名为gateway，可以自定义），该项目继承
+springcloud-parent，并保存在父项目的目录中。
+
+
+
+=== 第 3 页 ===
+
+ 
+2.1.2 添加依赖
+ 
+在pom.xml文件中添加gateway的依赖，如下：
+注意：在引入依赖时，不能引入spring-boot-starter-web的依赖，因为gateway与
+springmvc不兼容。
+2.1.3 创建全局配置文件
+ 
+在resources目录下创建application.yml文件（或者bootstrap.yml文件也可以）。并在该文件中
+进行如下配置：
+routes：配置路由规则，取值是List集合，所以可以通过横杠配置多组值（横杠前面有两个空
+格，后面也有一个空格）。
+predicates: 配置断言规则，用于路由规则的匹配，注意predicates的取值也是一个List集
+合，但是取值是字符串，所以用等号连接，而不是用冒号连接取值。
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--添加gateway的依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+</dependencies>
+
+
+
+=== 第 4 页 ===
+
+filters: 配置过滤器
+注意：这里即使没有在注册中心注册，也必须配置服务名称，否则系统会报如下错误：
+2.1.4 创建启动器
+ 
+在java目录下创建com.baidu包，并在该包下创建项目的启动类（GateWayApp9999），代码如
+下：
+2.1.5 测试功能
+ 
+调整项目
+- StripPrefix=1 用于去掉第一级的路径 order-service，将请求转换成
+http://localhost:8001/addOrder，然后请求向下传递到控制器
+#参考配置：》
+http://localhost:9999/order-web/addOrder  -->http://localhost:9999/addOrder
+java.lang.IllegalArgumentException: Param 'serviceName' is illegal, 
+serviceName is blank
+server:
+  port: 9999
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes: #可以配置多组路由，每组路由都必须包含id,uri,predicates,对于过滤器看情况
+使用
+        - id: order-web-router
+          uri: http://localhost:8001  #http://localhost:8001/order/addOrder
+          predicates:
+            - Path=/order-web/**  #http://localhost:9999/order-
+web/order/addOrder
+          filters:
+            - StripPrefix=1
+        - id: stock-serice-router
+          uri: http://localhost:9001
+          predicates:
+            - Path=/stock/**
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class GateWayApp9999 {
+    public static void main(String[] args){
+        SpringApplication.run(GateWayApp9999.class,args);
+    }
+}
+
+
+
+=== 第 5 页 ===
+
+先调整order-web和stock-service项目的依赖，排除掉对配置中心的依赖。具体配置如下：
+调整调整order-web和stock-service项目的全局配置文件，添加上登录nacos注册中心的用户
+名和密码
+ 
+功能测试：
+先启动order-web和stock-service项目，测试http://localhost:8001/order/addOrder请求和
+http://localhost:9001/stock/getAll请求是否成功，发现请求都正常了。
+启动gateway项目，通过该项目作为网关，发出http://localhost:9999/order-web/order/addOrd
+er请求，查看结果发现已经转发到order-web项目中了，说明网关生效了。
+在浏览器中发出http://localhost:9999/stock/getAll请求，查看结果发现已经转发到stock-service
+项目中了，说明网关生效了。
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+spring:
+  cloud:
+    nacos:
+      username: nacos
+      password: nacos
+
+
+
+=== 第 6 页 ===
+
+ 
+2.2 gateway整合nacos注册中心
+ 
+上述案例中，我们的转发路径都是在配置文件application.yml中直接写死的，当搭建集群或者项
+目太多，这样直接将转发的目标地址写死会比较复杂，所以可以借助于注册中心的服务名称，将请
+求转发到对应的服务中去即可。
+gateway整合nacos的注册中心实现步骤如下：
+2.2.1 添加依赖
+ 
+在gateway项目的pom.xml文件中添加nacos服务注册中心的相关依赖。
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--添加gateway的依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <!--排除springboot的web支持，因为gateway网关与springmvc不兼容-->
+            <exclusion>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </exclusion>
+            
+            <!--排除掉mybatis-plus，因为网关不用操作数据库-->
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+            
+            <!--排除nacos的配置中心依赖，因为目前我们只是整合nacos的注册中心，不用配置
+中心-->
+            <exclusion>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+            </exclusion>
+        </exclusions>
+
+
+
+=== 第 7 页 ===
+
+ 
+2.2.2 修改配置文件
+ 
+修改application.yml文件，具体配置如下：
+uri以 lb: //开头（lb代表从注册中心获取服务），后面接的就是你需要转发到的服务名称，
+需要与目标项目配置的服务名称一致
+ 
+2.2.3 测试功能
+ 
+进入nacos的注册中心，发现gateway项目也在nacos注册中心注册了。
+    </dependency>
+</dependencies>
+#第二种用法：结合注册中心配置服务，不结合配置中心进行配置使用。
+server:
+  port: 9999
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+    #配置gateway相关信息
+    gateway:
+      routes:
+        - id: order-web-route
+          uri: lb://order-web
+          predicates:
+            - Path=/order-web/**
+          filters:
+            - StripPrefix=1
+        - id: stock-service-route
+          uri: lb://stock-service
+          predicates:
+            - Path=/stock/**
+
+
+
+=== 第 8 页 ===
+
+启动order-web和stock-service项目，然后启动gateway项目，在浏览器中输入http://localhost:9
+999/order-web/order/addOrder请求，查看显示效果，发现请求已经转发到了order-web的控制
+器，并通过控制器远程调用了stock-naocs中的服务。说明网关配置成功了。
+在浏览器中输入http://localhost:9999/stock/getAll请求，发现也直接转发到了stock-nacos项目中
+的控制器，说明网关配置成功了。
+2.3 gateway整合nacos配置中心
+ 
+上述案例中，我们用到了nacos的注册中心，但是当配置信息太多，而且经常变化时，这样的写法
+维护起来会过于复杂，所以我们可以将这些配置保存到nacos配置中心。
+gateway整合nacos注册中心和配置中心的实现步骤如下：
+ 
+2.3.1 添加依赖
+ 
+在gateway项目的pom.xml文件中添加nacos服务注册与配置中心的依赖。
+注意：在引入依赖时，不能引入spring-boot-starter-web的依赖，因为gateway与springmvc不兼
+容。
+如果是通过引用公共模块（common-api）的依赖，则需要将将spring-boot-starter-web排
+除掉
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--添加gateway的依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <!--排除springboot的web支持，因为gateway网关与springmvc不兼容-->
+          <exclusion>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </exclusion>
+            
+            <!--排除掉mybatis-plus，因为网关不用操作数据库-->
+
+
+
+=== 第 9 页 ===
+
+ 
+2.3.2 修改配置文件
+ 
+打开nacos的配置中心，进入配置列表，创建如下配置：
+注意选择dev的命名空间，方便到时候配置的时候找到命名空间的ID
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+
+
+
+=== 第 10 页 ===
+
+上图配置的路由进行具体如下：
+uri以 lb: //开头（lb代表从注册中心获取服务），后面接的就是你需要转发到的服务名
+称，需要与目标项目配置的服务名称一致
+创建bootstrap.yml文件，具体配置如下：
+修改application.yml文件，具体配置如下：
+ 
+2.3.3 测试功能
+ 
+进入nacos的注册中心，发现gateway项目也在nacos注册中心注册了。
+#配置gateway相关信息
+spring:
+  cloud:
+    gateway:
+      routes: #配置路由规则，可以配置多组路由规则
+        - id: order-web-router
+          uri: lb://order-web  
+          predicates:
+            - Path=/order-web/**  
+          filters:
+            - StripPrefix=1
+        - id: stock-service-router
+          uri: lb://stock-service
+          predicates:
+            - Path=/stock/**
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        service: gateway
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: cacef60e-7c71-470d-8633-68bc58f92598
+        file-extension: .yml
+       # group: DEFAULT_GROUP
+      username: nacos
+      password: nacos
+  application:
+    name: com.baidu.gateway.dev
+#第三种用法：结合注册中心，调用服务，结合配置中心，进行路由的配置使用
+#具体使用，请查看bootstrap.yml和配置中心
+server:
+  port: 9999
+
+
+
+=== 第 11 页 ===
+
+启动order-web和stock-service项目，然后启动gateway项目，在浏览器中输入http://localhost:9
+007/order-web/order/addOrder请求，查看显示效果，发现请求已经转发到了order-web的控制
+器，并通过控制器远程调用了stock-service中的服务。说明网关配置成功了。
+在浏览器中输入http://localhost:9999/stock/getAll请求，发现也直接转发到了stock-nacos项目中
+的控制器，说明网关配置成功了。
+ 
+ 
+三、GateWay网关的跨域问题
+ 
+3.1 相关概念
+ 
+3.1.1 什么是跨域
+ 
+跨域问题通常指的是浏览器在执行脚本时，由于同源策略的限制，不能执行其他网站的脚本或访问
+其他网站的资源。以下情况属于跨域问题：
+1. 域名不同：当浏览器尝试从一个域名访问另一个域名的资源时，会出现跨域问题。即使两个
+网站部署在同一台服务器上，只要它们的域名不同，就会触发浏览器的同源策略限制。
+2. 端口不同：同源策略也包括端口号，因此如果浏览器访问的端口号与实际提供资源的端口号
+不同，也会出现跨域问题。
+3. 协议不同：如果协议不同（如http和https），也会出现跨域问题。这是因为浏览器会将不同
+的协议视为不同的源。
+ 
+需要注意的是，跨域问题只会影响浏览器端的JavaScript代码，对于服务端代码来说是不存在
+跨域问题的。因此，如果是服务端代码访问其他服务，是不会受到跨域问题的限制的。
+跨域问题主要是浏览器为了安全考虑而实施的一种限制，它能有效地防止跨站攻击。然而，在实际
+开发中，由于多台服务器之间的交互需求，地址和端口可能不同，因此解决跨域问题成为了前端开
+发中的一个重要任务。
+3.1.2 如何实现跨域
+ 
+
+
+
+=== 第 12 页 ===
+
+所有的微服务是通过网关这个入口，在和前端对接口时，必然涉及到有关跨域的问题（因为前端是
+一个单独的项目，请求要发送到网关，则需要进行跨域处理）。关于服务端跨域有很多方案，可以
+加注解(指定具体的路径允许跨域)，也可以统一配置
+既然是在网关里边来解决跨域问题的，就不能在下流的服务里边再重复引入解决跨域的配置了。否
+则会导致跨域失效。
+3.1.3 通过yml方式配置
+ 
+通过在application.yml文件中进行如下配置来解决跨域问题
+ 
+3.2 实现跨域演示
+ 
+3.2.1 创建前端项目
+ 
+通过vscode创建一个前端项目（mytest），在项目中创建index.html页面，引入jquery，发出
+ajax请求，具体代码如下：
+spring:
+  cloud:
+    gateway:
+      #跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowCredentials: false #取值为false表示不允许携带认证信息，例如不支持
+携带cookie跨域
+            allowedOriginPatterns: "*" #允许跨域的源(网站域名/ip)，设置*为全部
+            allowedHeaders: "*" #允许跨域请求里的head字段，设置*为全部
+            allowedMethods: #允许跨域的method， 默认为GET和OPTIONS，设置*为全部
+              - OPTIONS
+              - GET
+              - POST
+            max-age: 3600 # 跨域允许的有效期
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript" src="/js/jquery-3.7.1.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("button").click(function () {
+                $.ajax({
+                    url: "http://localhost:9999/stock/getAll",
+                    data: {},
+                    type: "post",
+                    dataType: "text",
+                    success: function (data) {
+                        alert("data:" + data);
+                        $("p").html(data);
+                    },
+
+
+
+=== 第 13 页 ===
+
+在浏览器中打开index.html页面，点击按钮，查看F12的控制台，发现如下错误
+出现这个错误的原因是没有处理跨域问题。
+ 
+3.2.2 配置网关跨域
+ 
+修改gateway项目的application.yml文件，添加上跨域处理的配置，代码如下：
+bootstrap.yml文件中已经保存了和nacos相关的注册中心与配置中心的相关信息。
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <button>测试跨域问题</button>
+    <p>原始内容</p>
+</body>
+</html>
+Access to XMLHttpRequest at 'http://localhost:9999/stock/updateStock' from 
+origin 'http://localhost:63343' has been blocked by CORS policy: No 'Access-
+Control-Allow-Origin' header is present on the requested resource.jquery-
+1.8.3.js:8434          
+POST http://localhost:9999/stock/updateStock net::ERR_FAILED 403
+server:
+  port: 9999
+spring:
+  cloud:
+    gateway:
+      #跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowCredentials: false #取值为false表示不允许携带认证信息，例如不支持
+携带cookie跨域
+            allowedOriginPatterns: "*" #允许跨域的源(网站域名/ip)，设置*为全部
+            allowedHeaders: "*" #允许跨域请求里的head字段，设置*为全部
+            allowedMethods: #允许跨域的method， 默认为GET和OPTIONS，设置*为全部
+              - OPTIONS
+              - GET
+              - POST
+            max-age: 3600 # 跨域允许的有效期
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+
+
+=== 第 14 页 ===
+
+如果使用的是注册中心结合配置中心进行配置，则配置中心的配置信息如下：
+ 
+3.2.3 测试功能
+ 
+启动stock-service项目和gateway项目，然后运行index.html页面，点击跨域处理暗流，查看页面
+显示效果，说明跨域处理生效了。
+四、GateWay整合Sentinel
+ 
+网关作为内部系统外的一层屏障，对内起到了一定的保护作用，限流便是其中之一，网关层的限流
+可以简单地针对不同路由进行限流，也可以针对业务的接口进行限流，或者根据接口的特征分布限
+流。
+具体可参考网站：https://github.com/alibaba/Sentinel/wiki/网关限流
+ 
+4.1 实现网关整合sentinel
+ 
+4.1.1 添加依赖
+ 
+在gateway项目中添加如下依赖：
+        service: gateway
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: cacef60e-7c71-470d-8633-68bc58f92598
+        file-extension: .yml
+       # group: DEFAULT_GROUP
+      username: nacos
+      password: nacos
+  application:
+    name: com.baidu.gateway.dev
+spring:
+  cloud:
+    gateway:
+      routes: #配置路由规则，可以配置多组路由规则
+        - id: order-web-router
+          uri: lb://order-web  
+          predicates:
+            - Path=/order-web/**  
+          filters:
+            - StripPrefix=1
+        - id: stock-service-router
+          uri: lb://stock-service
+          predicates:
+            - Path=/stock/**
+
+
+
+=== 第 15 页 ===
+
+gateway项目中pom.xml文件完整的配置
+<!--添加sentinel的依赖-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+<!--添加gateway整合sentinel的依赖-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-alibaba-sentinel-gateway</artifactId>
+</dependency>
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--添加gateway的依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+    <!--添加sentinel的依赖-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+    </dependency>
+    <!--添加gateway整合sentinel的依赖-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-alibaba-sentinel-gateway</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <!--排除springboot的web支持，因为gateway网关与springmvc不兼容-->
+            <exclusion>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </exclusion>
+            
+            <!--排除掉mybatis-plus，因为网关不用操作数据库-->
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+
+
+
+=== 第 16 页 ===
+
+ 
+4.1.2 添加配置
+ 
+在application.yml中添加sentinel地址的配置，具体如下：
+gateway项目application.yml文件完整配置如下：
+具体的路由配置已经保存到配置中心，读取配置中心的信息已经保存到bootstrap.yml文件
+中。
+ 
+4.1.3 测试整合结果
+ 
+完成上述配置以后，重启gateway网关，在浏览器中输入http://localhost:8888，进入sentinel控
+制台，在浏览器中输入http://localhost:9999/stock/geAll请求，可以在sentinel控制台中看到
+stock-service-router路由，结果如下，说明gateway与sentinel整合成功。
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+spring:
+  cloud:
+    sentinel:
+      transport:
+        #配置sentinel地址
+        dashboard: 127.0.0.1:8888
+server:
+  port: 9999
+spring:
+  cloud:
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8888
+    gateway:
+      #跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowCredentials: false #取值为false表示不允许携带认证信息，例如不支持
+携带cookie跨域
+            allowedOriginPatterns: "*" #允许跨域的源(网站域名/ip)，设置*为全部
+            allowedHeaders: "*" #允许跨域请求里的head字段，设置*为全部
+            allowedMethods: #允许跨域的method， 默认为GET和OPTIONS，设置*为全部
+              - OPTIONS
+              - GET
+              - POST
+            max-age: 3600 # 跨域允许的有效期
+
+
+
+=== 第 17 页 ===
+
+ 
+4.2 流控规则详解
+ 
+进入sentinel的请求链路，选择stock-service-router，配置流控，可以查看到如下界面：
+间隔：以前使用sentinel进行流控时，默认都是1秒钟，这里可以设置间隔时间，根据实际情况的
+需要进行设置。
+Burst size：表示宽容次数，例如QPS配置为2，间隔为1，Burst size配置为1，则表示在一秒请求
+达到三次以上才会限流。
+针对请求属性：将针对请求属性勾选以后可以看到下面出现了参数属性。这些属性其实就是前面的
+断言工厂，所以这里可以配置针对断言工厂的限流。
+Client IP：表示针对IP进行流控配置
+
+
+
+=== 第 18 页 ===
+
+Remote Host：表示针对远程域名进行配置
+Header：表示针对请求头部进行配置
+URL参数：表示针对URL地址中传递的参数进行限流
+Cookie：表示针对指定cookie进行限流。
+属性值匹配：勾选属性匹配以后会打开匹配模式的取值，这是辅助参数属性来进行的。可以先选择
+参数属性，然后在属性值匹配中再来进行辅助补充。
+匹配模式：取值有精确，字串，正则，匹配串
+精确：表示对于参数属性的选择，进行精确匹配，在匹配串中填写精确值
+字串：只要前面匹配成功，后面就是模糊匹配
+正则：匹配正则表达式
+4.3 设置流控规则
+ 
+4.3.1 设置QPS流控
+ 
+设置QPS的取值为2，表示每秒接收2个请求（如果再配置间隔为2，表示两秒中内能接收2个请
+求）配置如下：
+快速在浏览器中刷新http://localhost:9999/stock/getAll请求（达到每秒2次以上），发现结果被
+流控了。
+
+
+
+=== 第 19 页 ===
+
+4.3.2 设置精确匹配流控
+ 
+配置流控规则如下，注意需要指定具体的IP地址。
+这个配置表示针对IP地址的精确匹配，ip地址为127.0.0.1，要求在两秒内可以接收三个请
+求，超出了就实行流控
+ 
+启动gateway项目和stock-nacos项目，在浏览器中输入http://127.0.0.1:9999/stock/getAll请求，
+并且保证在两秒内至少刷新四次，查看结果如下：
+注意：如果请求改为http://localhost:9999/stock/getAll，则无论刷新多少次都不会被流控。
+这是因为请求地址是localhost，而我们实施的流控规则是针对具体IP地址的。
+
+
+
+=== 第 20 页 ===
+
+ 
+4.3.3 设置URL请求参数流控
+ 
+注意：这里的请求参数流控，需要用常规方式进行发送参数，不能使用restfull风格发送参数。
+注意：现在是对消费者（order-web项目）进行流控配置。
+ 
+在浏览器中输入http://localhost:9999/order-web/order/getOrderByStockId?stockId=1请求，注
+意携带参数id=1,查看页面结果如下：
+
+
+
+=== 第 21 页 ===
+
+多次刷新（每秒至少刷新三次），查看结果如下：说明已经被流控了。
+ 
+ 
+ 
+
+

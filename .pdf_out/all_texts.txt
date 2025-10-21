@@ -1,0 +1,7156 @@
+=== 微服务阿里巴巴课程01：微服务概述.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴01: 微服务概述
+ 
+ 
+一、开发架构简介
+ 
+随着互联网的发展，网站应用的规模也在不断的扩大，进而导致系统架构也在不断的更新，从互联
+网早期到现在，系统架构经历了如下几个过程：单体应用架构-->垂直应用架构-->分布式架构--
+>SOA架构-->微服务架构，如下进行简单介绍：
+ 
+1.1、单体应用架构
+ 
+互联网早期，一般的网站应用流量较小，只需一个应用，将所有功能代码都部署在一起就可以，这
+样可以减少开发，部署和维护的成本。
+例如：电商项目，里面会包含很多用户管理，商品管理，订单管理，物流管理等功能模块，我们把
+这些功能模块做成一个web项目，然后部署到一台服务器上运行就可以了，
+优点：
+项目架构简单，开发正本低
+项目部署在一台服务器上，维护方便
+缺点：
+全部功能集成在一个项目中，对于大型项目而言不易开发和维护
+项目模块之间耦合度高，单点容错率低。
+无法针对不同模块进行针对性优化和水平扩展
+ 
+1.2、垂直应用架构
+ 
+随着访问量的逐渐增大，单体应用只能依靠增加节点来应对，但是这时候会发现并不是所有的模块
+都会有比较大的访问量。
+例如：还是以上面的案例为例，用户访问量的增加可能影响的只是用户的订单模块，但是对消息模
+块的影响可能比较小，那么此时我们希望只多增加几个订单模块，而不增加消息模块，此时单体应
+用就做不到了，垂直应用也就以你应运而生了。
+所谓的垂直应用架构，就是将原来的一个应用拆分成了几个互不相干的应用，以提升效率。例如我
+们可以 将上面的电商的单体应用拆分成：
+电商系统（用户管理，商品管理，订单管理）
+后台系统（用户管理，订单管理，客户管理）
+CMS系统（广告管理，营销管理）
+
+
+
+=== 第 2 页 ===
+
+这样分解完毕以后，当出现用户访问量变大，只需要增加电商系统的节点，就可以了，而无需增加
+后台和CMS的节点。
+优点：
+系统拆分实现了流量分但，解决了并发问题，而且可以针对不同模块进行优化和水平扩展
+一个系统的问题不会影响到其他系统，提高了容错性
+缺点
+系统之间相互独立，无法进行相互调用
+系统之间相互独立，会又触发开发任务
+ 
+1.3、分布式架构
+ 
+当垂直应用越来越多，重复的业务代码就会越来越多，这时候，我们就思考可不可以将重复的代码
+抽取出来，做成统一的业务层作为独立的服务，然后由前端控制层调用不同的业务层服务？这就产
+生了新的分布式系统架构，它将把工程拆分成表现层和服务层两部分，服务层中包含业务逻辑。表
+现层只需要处理 和页面的交互，业务逻辑都是调用服务层的服务来实现。
+优点：
+抽取公共的功能为服务层，提高代码复用性
+缺点：
+系统间耦合度变高，调用关系错综复杂，难以维护。
+ 
+1.4、SOA架构
+ 
+在分布式架构下，当服务越来越多，容量的评估，小服务资源的浪费等问题逐渐显现，此时需要增
+加一个调度中心堆集群进行实时管理，此时，用于资源调度和治理中心（SOA :service Oriented 
+Architecture)是关键。
+优点：
+使用治理中心（ESB|dubbo）解决了服务间调用关系的自动调节
+缺点
+服务间会有依赖关系，一旦某个环节出错会影响较大（服务雪崩）
+服务关系复杂，运维，测试，部署等都比较困难。
+ 
+1.5、微服务架构
+ 
+微服务架构在某种程度上是面向服务的架构SOA的继续发展，它更加强调服务的"彻底拆分"。
+微服务架构与SOA架构的不同之处：
+微服务架构比SOA架构粒度会更加精细，让专业的人去做专业的事情，目的在于提高效率，
+每个服务与服务之间互不影响。微服务架构中，每个服务必须独立部署，微服务架构更加轻
+巧，轻量级。
+SOA架构中可能数据库存储会发生共享，微服务强调每个服务都是单独的数据库，保证每个
+服务与服务之间互不影响。
+项目体现特征微服务架构比SOA架构更加适合于物联网公司敏捷开发，快速迭代版本，因为
+粒度非常长精细。
+优点：
+原子化拆分，独立打包、部署和升级，保证每个微服务清晰的任务划分，利于扩展。
+
+
+
+=== 第 3 页 ===
+
+微服务之间采用Restfull等轻量级http协议相互调用。
+缺点：
+分布式系统开发的技术成本高（容错，分布式事务等）
+复杂性更高，各个微服务进行分布式独立部署，当进行模块调用的时候，分布式将会变得更
+加麻烦。
+ 
+二、微服务架构介绍
+ 
+2.1、基本概念
+ 
+    微服务其实是一种架构风格，我们在开发一个应用的时候，这个应用应该是由一组小型服务组成，每
+个小型服务都运行在自己的服务器上，小型服务之间采用Restfull等轻量级http协议相互调用。
+2.2、微服务架构常见问题
+ 
+一旦采用微服务架构开发系统，就势必会遇到如下几个问题：
+这么多小服务，如何管理他们？
+（注册中心【服务注册，发现，删除】）。
+这么多小服务，他们之间如何通讯？
+必须遵守http协议，传参数的时候，必须使用restfull风格，可以通过RestTemplate和
+openfeign接口实现远程调用
+这么多小服务，客户端怎么访问他们？
+网关（geteway）
+这么多小服务，一旦出现问题，应该如何处理   
+容错机制（sentinel：流控，降级服务），例如：C（用户）-->A（服务消费者，设置流
+控与降级）--->B(服务提供者)
+这么多小服务，一旦出现问题，应该如何排错
+链路追踪（skywalking）
+对于上面的问题，是任何一个微服务设计者都不能绕过去的，因此大部分的微服务产品都针对每一
+个问题提供了相应的组件来解决它们。
+
+
+
+=== 第 4 页 ===
+
+ 
+2.3、常见的微服务架构
+ 
+dubbo：zookeeper+dubbo+springboot
+配套的通讯方式：RPC
+注册中心：zookeeper
+配置中心：diamond
+SpringCloud：全家桶+轻松嵌入第三方组件(Netflix），该方式已经闭源了，不再更新了。
+配套通讯方式：http  restful
+注册中心：eureka
+配置中心：config
+断路器：hystrix
+网关：zuul
+分布式追踪系统：sleuth+zipkin
+SpringCloud Alibaba，这是目前的主流微服务架构。
+spring cloud以微服务为核心的分布式系统构建标准
+配套通讯方式：http  restful
+注册中心：nacos
+配置中心：nacos
+容错机制：sentinel
+分布式事务：seata
+链路追踪：skywalking
+网关：GetWay
+ 
+2.4、spring cloud alibaba介绍
+ 
+spring cloud alibaba致力于提供微服务开发的一站式解决方案，此项目包含开发微服务架构的必
+须组件，方便开发者通过spring cloud变成模型轻松使用这些组件来开发微服务架构。
+依托spring cloud alibaba，你只需要添加一些注解和少量配置，就可以将spring cloud应用接入
+案例分布式应用解决方案，通过阿里中间件来迅速搭建分布式应用系统。
+
+
+
+=== 第 5 页 ===
+
+ 
+2.5、spring cloud各套实现对比
+ 
+ 
+三、微服务环境搭建
+ 
+3.1 版本约束关系
+ 
+Spring Cloud与SpringBoot, Spring Cloud Alibaba版本兼容
+适配 Spring Boot 3.0.2，Spring Cloud 2022.x 版本及以上的 Spring Cloud Alibaba 版本：
+Spring Cloud Alibaba 组件版本关系(nacos2.2.1版本有问题，我们实际使用的是2.2.2版本)
+ 
+
+
+
+=== 第 6 页 ===
+
+3.2、搭建nacos注册中心
+ 
+3,2,1、基本概念
+ 
+nacos是一个集服务发现（nacos  discovery），服务配置（nacos  config）和服务管理的平台。
+也就是说nacos是一个集注册中心，配置中心以及服务管理的平台
+注册中心：负责服务的注册，拉取注册列表等功能，用于实现提供者和消费者协调工作
+配置中心：用于将application.yml配置文件中的公共配置集合起来，统一配置。
+服务管理平台：提供管理界面，供可视化的管理与配置。
+nacos的关键特性包括：
+服务发现和服务健康检测
+服务发现：发现可用服务，并注册到注册列表中。
+服务健康检查：通过心跳机制检查已经注册的各个服务是否正常。
+服务及其元数据管理
+服务的元数据主要是指：注册服务时的服务名称，服务的远程IP地址，端口，状态等。
+3.3.2、nacos注册中心
+ 
+nacos注册中心负责管理所有微服务，解决微服务之间调用关系错综复杂，难以维护的问题。
+ 
+ 
+3.2.3、nacos核心功能
+ 
+服务注册：nacos client会通过发送请求的方式向nacos server注册自己的服务，提供自生的元数
+据，比如服务名称，IP地址，端口等信息。nacos server接收到注册请求后，就会把这些元数据信
+息存储在一个注册列表中。
+服务心跳：在服务注册后，nacos client会维护一个定时心跳来定时通知nacos server，说明服务
+一直处于可用状态，防止被删除，默认5秒发送一次心跳。
+服务同步：nacos server集群之间会互相同步服务实例，用来保证服务信息的一致性。
+服务发现：服务消费者（nacos client）在调用服务提供者的服务时，会发送一个rest请求给
+nacos server，获取上面注册的服务列表，并且缓存在nacos client本地，同时会在nacos client本
+地开启一个定时任务，定时拉取服务端最新的注册列表信息更新到本地缓存。
+
+
+
+=== 第 7 页 ===
+
+服务健康检查：nacos server会开启一个定时任务用来检查注册服务实例的健康情况，对于超过
+15秒没有收到客户端心跳的实例会将它的健康状态属性设置为false(客户端服务发现是不会发现)，
+如果某个实例超过30秒没有收到心跳，则直接删除该实例（被删除的实例如果回复发送心跳则会
+重新注册）。
+主流的注册中心的比较
+ 
+3.2.4、安装nacos注册中心
+ 
+3.2.4.1 下载nacos服务端
+ 
+下载nacos注册中心
+因为spring cloud alibaba使用的版本是2022.0.0.RC2，对于的nacos版本为2.2.2版本。所以
+需要下载该版本。
+下载地址：https://github.com/alibaba/Nacos/releases，需要下载的软件：nacos-
+server-2.2.2.zip
+解压下载的nacos-server-2.2.2.zip文件，查看文件结构：
+ 
+3.2.4.2 修改配置
+ 
+
+
+
+=== 第 8 页 ===
+
+nacos默认是集群模式，所以需要调整成单机模式，只需要修改bin目录下的startup.cmd文件
+右键点击startup.cmd文件，选择使用notepad++打开，然后将set mode="cluster"修改成
+standalone即可。
+3.2.4.3 启动nacos服务端
+ 
+修改完成以后，可以进入bin目录，点击startup.cmd启动
+出现下面界面如果卡住了，注意按一下回车键。
+启动完成以后可以根据这里提到的http://192.168.217.1:8848/nacos/index.html访问
+nacos。
+当最后出现Nacos started successfully in stand alone mode。use embedded storage
+时，才表示nacos正常启动了。
+ 
+在浏览器中输入：http://192.168.217.1:8848/nacos/index.html地址查看nacos首页
+也可以用http://localhost:8848/nacos/index.html访问首页。
+
+
+
+=== 第 9 页 ===
+
+注入用户名和密码（都是nacos），进行登录
+ 
+3.2.4.4 启动nacos失败问题
+ 
+nacos启动有时候会遇到直接闪退或者无法启动的问题，此时主要有如下三种可能原因
+1、nacos的解压路径中有中文或者特殊符号
+2、JDK要求17及以上版本，并且需要配置环境变量JAVA_HOME和path.
+3、可能安装了虚拟机，导致启动的时候找到的是虚拟机的IP地址。
+如果出现启动nacos时闪退，又看不到具体的错误提示信息，可以进入cmd，通过startup.cmd -m 
+standalone命令启动。
+3.4、搭建项目
+ 
+3.4.1 springboot3.0.2版本组合
+ 
+JDK版本：17
+MYSQL数据库版本：8.0/5.7以上
+
+
+
+=== 第 10 页 ===
+
+SpringBoot使用版本：3.0.2
+Spring Cloud版本：2022.0.0
+Spring Cloud alibaba版本：2022.0.0.0-RC2
+maven:3.8.1
+3.4.2、创建父项目
+ 
+3.4.2.1 创建父项目
+ 
+在idea2023版本中创建一个普通的maven项目，项目命名springcloud-parent。
+项目创建完成以后，可以考虑删除src包以及该包下所有文件，只需要保留pom.xml文件即
+可。
+ 
+配置pom.xml文件
+注意配置springboot，springcloud，spring cloud alibaba的版本问题，对于这几个包需要
+做版本锁定，当在子项目中运用这些技术的依赖包时就会自动根据锁定的版本查找匹配的目
+标版本。
+在此项目中加上pom，否则项目都无法打包。
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.baidu</groupId>
+    <artifactId>springcloud-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+
+
+=== 第 11 页 ===
+
+ 
+ 
+3.5、搭建nacos客户端
+ 
+3.5.1 创建公共模块
+ 
+注意：如果存在较多的项目需要用到相同的依赖和相同的实体类，此时可以在父项目
+（springcloud-parent）中创建一个公共模块（common-api）用于保存公共的依赖和实体类，
+此时只需要提供者和消费者引用该模块（common-api）即可。
+    <properties>
+            <maven.compiler.source>17</maven.compiler.source>
+            <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+    <!--添加版本锁定-->
+    <dependencyManagement>
+        <!--锁定springboot版本为3.0.2-->
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>3.0.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!--锁定springcloud版本为2022.0.0-->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2022.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!--锁定spring cloud alibaba 版本为2022.0.0.0-RC2-->
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>2022.0.0.0-RC2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
+
+
+
+=== 第 12 页 ===
+
+ 
+在公共模块中配置公共依赖：
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>common-api</artifactId>
+    <!--配置公共依赖-->
+    <dependencies>
+        
+         <!--引入bootstrap的依赖-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+        </dependency>
+        
+        
+        <!--添加springboot的web支持-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+
+
+=== 第 13 页 ===
+
+3.5.2、创建order-web项目
+ 
+创建一个空的maven项目(order-web)，该项目继承父项目，表示消费者，用于处理用户从页面发
+出的订单请求
+        <!--添加nacos服务注册发现-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-
+discovery</artifactId>
+        </dependency>
+        <!--引入nacos的服务配置中心-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+        </dependency>
+        
+        <!--支持feign，用于进行远程调用-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        
+        <!--添加负载均衡的依赖,2022以后的版本需要单独配置-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+    </dependencies>
+</project>
+
+
+
+=== 第 14 页 ===
+
+ 
+修改pom.xml文件
+一定要添加nacos服务注册发现的依赖包，只有添加了这个包，当启动项目的时候才会去注
+册中心注册。
+添加config包是因为有很多关于nacos的配置，我们可以不用在项目中配置，而直接配置到nacos
+配置中心。
+spring-cloud-starter-alibaba-nacos-discovery已经集成了ribbon，所以这里不需要配置
+ribbon。
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>order-web</artifactId>
+    <dependencies>
+        <!--引入公共模块-->
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+
+
+=== 第 15 页 ===
+
+ 
+修改全局配置文件application.yml，在resources目录下创建一个application.yml文件，并进行如
+下配置
+配置在nacos注册中心中的服务名称可以通过spring.cloud.nacos.discovery.service进行配
+置，如果不配置则默认使用spring.application.name的名称作为服务名称。
+在配置应用名称spring.application.name时，名称取值不要用下划线的横杠，这样可能
+无法识别。
+spring.cloud.nacos.discovery.server-addr表示服务注册的位置
+spring.main.allow-bean-definition-overriding: true 表示支持配置bean的覆盖。
+当在openfeign进行远程调用服务提供者的时候，如果出现同一个服务提供者中创建了
+多个控制器，而服务名称相同，测试在进行远程调用是会出现如下错误，此时可以通过
+配置支持bean的覆盖来解决该异常。该配置应该写在服务消费者中，而不是服务提供
+者中。
+ 
+配置启动类
+在java目录下创建com.baidu包，并在该包下创建springboot的启动类
+注意：因为父项目的groudId取值是com.baidu，所以子项目的启动器所在的包必须是
+com.baidu，否则启动项目时会出现如下错误，这是因为在加载springboot启动器时，
+系统没有扫描到指定的启动器的原因。
+</project>
+The bean 'product-service.FeignClientSpecification' could not be 
+registered. A bean with that name has already been defined and 
+overriding is disabled.
+Action:
+Consider renaming one of the beans or enabling overriding by setting 
+spring.main.allow-bean-definition-overriding=true
+server:
+  port: 8001
+  tomcat:
+    uri-encoding: utf-8
+spring:
+  application:
+    name: order-web
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  main:
+    allow-bean-definition-overriding: true      
+Consider defining a bean of type 
+'com.netflix.client.config.IClientConfig' in your configuration.
+
+
+
+=== 第 16 页 ===
+
+ 
+3.5.3、创建stock-service项目
+ 
+该项目表示提供者，用于访问数据库（对数据库进行crud操作），提供数据给消费者使用。
+第一种方式：
+用如上创建order-web项目的方式创建本项目，基本配置也是一样的，需要调整一下内容：
+配置pom.xml文件，引入依赖
+配置全局配置文件（application.yml）
+配置springboot的启动类
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class OrderWebApplication8001 {
+    public static void main(String[] args) {
+        SpringApplication.run(OrderWebApplication8001.class, args);
+    }
+}
+<dependencies>
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+server:
+  port: 9001
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+
+
+=== 第 17 页 ===
+
+ 
+第二种方式：
+可以复制order-web项目，然后粘贴，导入进去（导入的时候注意修改项目名为stock-
+service），此时除了需要修改上面注意修改的内容以外还需要做如下调整：
+删除多余的order-web.iml文件。
+修改order-web的artifactId（order-web）
+将此结果改成stock-service，取值是项目名称
+在父项目的pom.xml文件中添加一个mudel，将这里的artifactId名称配置进去，表示该
+项目归父项目管理
+3.5.4、Nacos客户端更多配置
+ 
+这里列举了一些常用的配置，还有一些其他用法，这里就不列举了。
+ 
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import 
+org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class StockServiceApplication9001 {
+    public static void main(String[] args) {
+       
+ SpringApplication.run(StockServiceApplication9001.class,args);
+    }
+}
+<modules>
+    <module>order-web</module>
+    <module>stock-service</module>
+</modules>
+
+
+
+=== 第 18 页 ===
+
+ 
+3.6、测试nacos客户端注册
+ 
+先启动nacos服务端，然后再启动order-web和stock-service项目，进入http://localhost:8848/na
+cos/index.html页面的服务管理-->服务列表，查看注册情况如下：
+
+
+
+=== 第 19 页 ===
+
+出现如上结果，则说明客户端注册成功。
+ 
+四、nacos管理界面介绍
+ 
+nacos界面官网文档：https://nacos.io/zh-cn/docs/what-is-nacos.html
+常用使用位置是nacos的open-api，地址：https://nacos.io/zh-cn/docs/open-api.html
+4.1、服务列表功能
+ 
+服务列表主要用于显示已经注册的服务信息（服务名，分布名称，集群数目，实例数，健康实例
+数，触发保护阈值，操作等）
+显示命名空间，以及根据命名空间划分的服务信息。
+ 
+4.2、服务详情
+ 
+点击上图操作中的详情，可以进入服务详情页面
+保护阈值：nacos具有处理雪崩问题的能力，该值就是用于配置雪崩问题的，取值范围在0-1
+之间。
+权重：负责均衡时使用，分配的权值越大，提供服务的概率越高。
+上线下线问题：如果服务下线，则不能提供服务，但是nacos也不会将该服务从服务列表中
+删除。
+ 
+
+
+
+=== 第 20 页 ===
+
+五、实现功能
+ 
+这里的order-web项目表示服务消费者，stock-service项目表示服务提供者
+服务消费者负责与页面交互，接收请求与参数，调用服务提供者，从提供者获取数据，给用
+户响应
+服务提供者需要访问数据库，执行数据库操作（操作数据库，实现CRUD操作）
+一般是消费者以restful风格发送请求到提供者，从提供者获取数据，提供者也可以通过
+restful风格给提供者发送请求，提供协同操作实现具体功能。
+5.1 调整公共模块
+ 
+5.1.1 添加公共依赖
+ 
+在公共模块（common-api）中添加mybatis-plus的依赖和mysql数据库的驱动。
+5.1.2 创建表与实体类
+ 
+在mysql中创建如下表，并添加数据
+ 
+注意：在这里的实现中需要用到实体类Stock，此时可以在common-api模块中创建，从而使提供
+者和消费者都能使用。
+ <!--引入mybatis-plus的依赖-->
+<dependency>
+    <groupId>com.baomidou</groupId>
+    <artifactId>mybatis-plus-boot-starter</artifactId>
+    <version>3.5.5</version>
+</dependency>
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.16</version>
+</dependency>
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.20</version>
+</dependency>
+CREATE TABLE `t_stock` (
+  `stock_id` int NOT NULL AUTO_INCREMENT,
+  `stock_name` varchar(200) DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  PRIMARY KEY (`stock_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_0900_ai_ci;
+insert  into `t_stock`(`stock_id`,`stock_name`,`price`) 
+values (1,'苹果',8),(2,'香蕉',4),(3,'菠萝',3);
+
+
+
+=== 第 21 页 ===
+
+在创建公共模块的实体类时，不建议使用Lombok，只能手动配置构造方法，get/set方法，
+toString方法。
+ 
+5.2、实现stock-service功能
+ 
+5.2.1 修改全局配置文件
+ 
+修改application.yml文件，具体配置如下：
+ 
+package com.baidu;
+@TableName("t_stock")
+public class Stock {
+    @TableId(value = "stock_id",type = IdType.AUTO)
+    private Integer stockId;
+    private String stockName;
+    private Integer price;
+    
+    //无参数构造方法
+    public Stock() {
+    }
+    //全参数构造方法 
+    public Stock(Integer stockId, String stockName, Integer price) {
+        this.stockId = stockId;
+        this.stockName = stockName;
+        this.price = price;
+    }
+    
+    //省略get.set方法和toString方法
+    。。。。。
+}
+server:
+  port: 9001
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/gz01?serverTimezone=UTC
+    username: root
+    password: xiaoye
+mybatis-plus:
+  type-aliases-package: com.baidu.pojo
+  mapper-locations: classpath:/mappers/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+
+=== 第 22 页 ===
+
+5.2.2 创建dao接口
+ 
+创建com.baidu.dao包，并在该包下创建StockMapper接口，具体代码如下：
+ 
+5.2.3 创建service接口与实现类
+ 
+创建com.baidu.service包，并在该包下创建StockService接口，具体代码如下：
+在com.baidu.service包下创建impl包，并在该包下创建StockServiceImpl类，具体代码如下：
+ 
+5.2.4 创建控制器
+ 
+创建com.baidu.controller包，在该包下创建StockController类，用于处理接收消费者或者其他提
+供者发出的请求，访问数据库，实现对应的功能。
+注意：使用@RequestBody注解接收对象入参时，只能接收post请求方式，不能使用get请
+求方式
+import com.baidu.pojo.Stock;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+@Mapper
+public interface StockMapper extends BaseMapper<Stock> {
+}
+import com.baidu.pojo.Stock;
+import com.baomidou.mybatisplus.extension.service.IService;
+public interface StockService extends IService<Stock> {
+}
+import com.baidu.dao.StockMapper;
+import com.baidu.pojo.Stock;
+import com.baidu.service.StockService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+@Service
+public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> 
+implements StockService {
+}
+package com.baidu.controller;
+import com.baidu.pojo.Stock;
+import com.baidu.service.StockService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+
+
+=== 第 23 页 ===
+
+ 
+5.3、实现order-web功能
+ 
+5.3.1 修改依赖
+ 
+修改pom.xml中对公共模块（common-api）的依赖，排除掉mybatis-plus的依赖。
+import java.util.List;
+@RestController
+@RequestMapping("/stock")
+public class StockController {
+    @Autowired
+    private StockService service;
+    //查询所有库存库存信息
+    @RequestMapping("/getAll")
+    public List<Stock> getAll(){
+        System.out.println("-------查询所有库存库存信息-----");
+        //执行查询
+        List<Stock> list=service.list();
+        return list;
+    }
+    //根据id查询指定的库存信息
+    @RequestMapping("/getStockById/{id}")
+    public Stock getStockById(@PathVariable("id") Integer id){
+        System.out.println("------根据id查询指定的库存信息--------");
+        System.out.println("id:"+id);
+        //执行查询
+        Stock stock=service.getById(id);
+        return stock;
+    }
+    //根据id修改指定商品的库存信息
+    @RequestMapping("/updateStockById")
+    public boolean updateStockById(@RequestBody Stock stock){
+        System.out.println("--------updateStockById------");
+        System.out.println("stock:"+stock);
+        //执行修改
+        boolean flag=service.updateById(stock);
+        return flag;
+    }
+}
+<dependencies>
+    <!--引入公共模块-->
+
+
+
+=== 第 24 页 ===
+
+ 
+5.3.2 创建配置类
+ 
+创建com.baidu.config包，在该包下创建一个配置类（RestTemplateConfig），用于将
+RestTemplate对象配置称bean
+@LoadBalanced表示在发送请求的时候使用负载均衡策略。默认是轮询策略。
+ 
+5.3.3 创建控制器
+ 
+创建com.baidu.controller包，在该包下创建OrderController类，并自动注入RestTemplate对
+象，通过RestTemplate对象发送请求到提供者，从而获取数据。
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <!--排除依赖-->
+        <exclusions>
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+package com.baidu.config;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+@Configuration
+public class RestTemplateConfig {
+    @Bean
+    @LoadBalanced
+    public RestTemplate getRestTemplate(){
+        return new RestTemplate();
+    }
+}
+package com.baidu.controller;
+import com.baidu.pojo.Stock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+
+
+
+=== 第 25 页 ===
+
+import java.util.List;
+@RestController
+@RequestMapping("/order")
+public class OrderController {
+    @Autowired
+    private RestTemplate restTemplate;
+    //添加订单
+    @RequestMapping("/addOrder")
+    public String addOrder(){
+        System.out.println("-------addOrder------");
+        //远程调用，查询所有库存信息
+        String url="http://stock-service/stock/getAll";
+        List<Stock> list=restTemplate.getForObject(url, List.class);
+        //注意这里不能根据泛型类型直接遍历List<Stock>集合，否则会出现类型转换异常，
+        //可以遍历Object类型的List集合。因为getForObject方法没有指定返回值集合的泛型
+类型，所以是Object
+        System.out.println(list);  
+        return "添加订单成功，所有库存信息是："+list;
+    }
+    //查询订单时，根据id查询指定的库存信息
+    @RequestMapping("/getOrderByStockId")
+    public String getOrderByStockId(Integer stockId){ //这里的id表示的是商品库
+存主键
+        System.out.println("------getOrderByStockId-------");
+        System.out.println("stockId:"+stockId);
+        //远程调用，实现根据id查询指定的库存信息
+        String url="http://stock-service/stock/getStockById/{id}";
+        Stock stock=restTemplate.getForObject(url,Stock.class,stockId);
+        System.out.println("stock:"+stock);
+        return "查询订单成功，库存是："+stock;
+    }
+    //修改订单，修改商品库存信息
+    @RequestMapping("upateOrderById")
+    public String upateOrderById(){
+        System.out.println("-----upateOrderById-------");
+        //创建一个Stock对象，表示需要修改的库存
+        Stock stock=new Stock(1,null,8);
+        //远程调用，执行修改商品库存信息
+        String url="http://stock-service/stock/updateStockById";
+        boolean flag=restTemplate.postForObject(url,stock,boolean.class);
+        System.out.println("flag:"+flag);
+        return "修改订单结果由flag决定，flag="+flag;
+    }
+}
+
+
+
+=== 第 26 页 ===
+
+ 
+5.4、测试功能
+ 
+先启动nacos注册中心，然后启动stock-service项目，最后启动order-web项目，查看注册中心的
+服务列表，结果如下：
+在浏览器种输入http://localhost:8001/order/addOrder请求，查看运行结果：
+在浏览器种输入http://localhost:8001/order/getOrderByStockId?stockId=1请求，查看运行结
+果：
+在浏览器中发出http://localhost:8001/order/upateOrderById请求，查看运行结果：
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+
+
+=== 微服务阿里巴巴课程02：nacos集群搭建.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴02：nacos集群搭建
+ 
+一、linux环境下搭建nacos集群
+ 
+集群模式官方网站：https://nacos.io/zh-cn/docs/cluster-mode-quick-start.html
+ 
+ 
+1.1、预备环境准备
+ 
+基本环境
+64 bit OS Linux/Unix/Mac，推荐使用Linux系统。
+64 bit JDK 1.8+；
+Maven 3.2.x+；
+3个或3个以上Nacos节点才能构成集群
+高可用的nacos集群环境搭建。
+mysql数据库用于持久化存储nacos的配置信息。mysql数据库被集群共享
+ 
+
+
+
+=== 第 2 页 ===
+
+1.2、linux下搭建nacos集群环境
+ 
+下面配置的是IP地址为192.168.271.133的虚拟机，先配置一台，配置完成以后在远程复制到另外
+两台虚拟机，适当调整即可。
+如果考虑到机器的性能，则只配置一台虚拟机，然后将安装的nacos复制到同一台机器上，
+修改服务端口也可以。
+1.2.1、下载nacos的tar包
+ 
+可以直接到https://github.com/alibaba/nacos/releases/tag/1.4.1路径下载需要用到的tar包或者
+zip包。
+ 
+1.2.2、单机安装并配置nacos
+ 
+1.2.2.1、安装nacos
+ 
+使用root用户登录，进入/root目录 ，创建nacos目录，并将nacos-server-1.4.1.tar.gz包上传到此
+目录中
+ 
+在/root目录下创建software目录，将nacos服务端解压到/root/software目录下
+tar -zxvf nacos-server-1.4.1.tar.gz -C /root/software
+
+
+
+=== 第 3 页 ===
+
+1.2.2.2、配置nacos
+ 
+修改conf目录下的application.properties文件，将nacoos自带的基于内存模式的mysql数据库修
+改成外置的mysql数据库。
+注意：mysql数据库版本需要达到5.7以及以上版本，至少要用5.7版本，否则将无法连接上
+mysql。
+注意修改db.url.0取值中的ip地址，因为mysql数据库是集群共享的，所以要指定mysql
+具体在那台虚拟机上。
+当前虚拟机（192.168.217.133）上使用的nacos端口就是8848，所以这里不用改，但是集群
+的其他虚拟机的nacos端口使用的不是8848，而是8847，8846，所以在其他虚拟机上安装的
+nacos，需要在application.properties中修改使用的端口。
+注意：这里设置的密码与安装的mysql有关，mysql登录密码是什么，这里就设置什么密码。
+### Default web server port:
+server.port=8848
+#使用外置mysql数据源的配置
+spring.datasource.platform=mysql
+### count of DB
+db.num=1
+###Connect URL of DB
+db.url.0=jjdbc:mysql://192.168.217.133:3306/nacos?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true&useUnicode=true&useSSL=false&serverTimezone=UTC
+db.user.0=root
+db.password.0=Xiaoye_123
+
+
+
+=== 第 4 页 ===
+
+将conf目录下的cluster.conf.example复制一份，并改名为cluster.conf，在cluster.conf文件中进
+行如下配置：
+通过cp命令进行复制文件
+就是将组件集群的几台虚拟机的ip地址和nacos使用的端口写到cluster.conf文件中。
+配置bin目录下的startup.sh启动文件，为了方式内存不足，将nacos使用的内存大小进行如下配
+置：
+ 
+1.2.3、安装jdk
+ 
+注意：jdk的版本必须是1.8及以上版本，三台虚拟机都必须安装jdk。
+cp  cluster.conf.example  cluster.conf
+
+
+
+=== 第 5 页 ===
+
+上传jdk版本jdk-8u111-linux-x64.rpm，然后通过rpm命令进行安装，安装完成以后自动解
+压到/usr/java目录下。
+配置系统环境变量：进入/etc/profile目录，在底部添加如下内容，然后通过source命令使
+profile生效即可。
+ 
+1.2.4、安装mysql
+ 
+1.2.4.1、安装mysql
+ 
+因为mysql是三台虚拟机的nacos共享，所以只需要在一台虚拟机上安装mysql即可。这里我们安
+装到192.168.217.133的虚拟机上。
+如果linux系统自带的有mysql，则需要先删除以后才能安装，我们用的centos7，没有自带
+mysql，所以可以直接安装。
+查看进程，检查是否安装了mysql，如果安装了，则可以看到mysql的版本情况
+根据如下命名卸载mysql
+ 
+先上传mysql57-community-release-el7-9.noarch.rpm，然后通过rpm命令进行解压，软件会自
+动安装到
+如果出现so-bash: cannot create temp file for here-document: No space left on device错
+误，则说明磁盘空间不足（原本分配给虚拟机的是10G磁盘空间），将之间上传的jdk的tar包
+删除，腾出空间即可。可以通过df -Th命令查看磁盘占用情况。
+rpm -ivh jdk-8u111-linux-x64.rpm
+JAVA_HOME=/usr/java/jdk1.8.0_111
+export JAVA_HOME
+PATH=$PATH:$JAVA_HOME/bin
+export PATH
+rpm -qa|grep mysql
+rpm -e mysql版本 --nodeps
+#下载rpm包,如果有现成的包，也可以直接上传，不用这样下载。
+wget https://dev.mysql.com/get/mysql57-community-release-el7-9.noarch.rpm
+#解压rpm包
+rpm -ivh mysql57-community-release-el7-9.noarch.rpm
+
+
+
+=== 第 6 页 ===
+
+yum安装mysql的服务端
+ 
+启动mysql，并查看启动状态
+yum -y install mysql-server
+
+
+
+=== 第 7 页 ===
+
+ 
+查看默认密码，并记录下来，用于第一次登录，最后出现的R#f6nd1<HzM1就是密码。
+ 
+使用默认密码登录（默认密码上面命令已经查询出来了，是R#f6nd1<HzM1）。
+从这里可以看到当前的mysql版本是5.7.36的。满足nacos1.4.1的要求。
+ 
+#启动mysql
+systemctl start mysqld
+#查看mysql的启动状态
+systemctl status mysqld
+grep 'temporary password' /var/log/mysqld.log
+mysql -uroot -p
+
+
+
+=== 第 8 页 ===
+
+登录成功以后会发现不能使用show databases;需要修改密码以后才能正常使用。
+注意：密码需要数字，字母大小写，特殊字符组合的密码，我设置的成功密码是Xiaoye_123
+ 
+设置允许远程登录，并刷新。
+退出登录，重新通过命令用新设置的密码登录，发现已可以登录成功了。
+通过sqlyog图形软件连接虚拟机上的mysql，发现也可以 连接成功
+alter user 'root'@'localhost' identified by '新密码';
+grant all privileges on *.* to 'root'@'%' identified by '创建的密码' with 
+grant option;
+flush privileges;
+
+
+
+=== 第 9 页 ===
+
+ 
+1.2.4.2、创建数据库
+ 
+创建nacos集群需要用到的数据库，数据库表的代码如下，数据库名称根据配置的需要可以自定
+义。此案例数据库就叫nacos
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info   */
+/******************************************/
+CREATE TABLE `config_info` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(255) DEFAULT NULL,
+  `content` LONGTEXT NOT NULL COMMENT 'content',
+  `md5` VARCHAR(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` TEXT COMMENT 'source user',
+  `src_ip` VARCHAR(50) DEFAULT NULL COMMENT 'source ip',
+  `app_name` VARCHAR(128) DEFAULT NULL,
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT '租户字段',
+  `c_desc` VARCHAR(256) DEFAULT NULL,
+  `c_use` VARCHAR(64) DEFAULT NULL,
+  `effect` VARCHAR(64) DEFAULT NULL,
+  `type` VARCHAR(64) DEFAULT NULL,
+  `c_schema` TEXT,
+
+
+
+=== 第 10 页 ===
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfo_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='config_info';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_aggr   */
+/******************************************/
+CREATE TABLE `config_info_aggr` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(255) NOT NULL COMMENT 'group_id',
+  `datum_id` VARCHAR(255) NOT NULL COMMENT 'datum_id',
+  `content` LONGTEXT NOT NULL COMMENT '内容',
+  `gmt_modified` DATETIME NOT NULL COMMENT '修改时间',
+  `app_name` VARCHAR(128) DEFAULT NULL,
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfoaggr_datagrouptenantdatum` 
+(`data_id`,`group_id`,`tenant_id`,`datum_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='增加租户字段';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_beta   */
+/******************************************/
+CREATE TABLE `config_info_beta` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(128) NOT NULL COMMENT 'group_id',
+  `app_name` VARCHAR(128) DEFAULT NULL COMMENT 'app_name',
+  `content` LONGTEXT NOT NULL COMMENT 'content',
+  `beta_ips` VARCHAR(1024) DEFAULT NULL COMMENT 'betaIps',
+  `md5` VARCHAR(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` TEXT COMMENT 'source user',
+  `src_ip` VARCHAR(50) DEFAULT NULL COMMENT 'source ip',
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfobeta_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_beta';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_tag   */
+/******************************************/
+CREATE TABLE `config_info_tag` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT 'tenant_id',
+
+
+
+=== 第 11 页 ===
+
+  `tag_id` VARCHAR(128) NOT NULL COMMENT 'tag_id',
+  `app_name` VARCHAR(128) DEFAULT NULL COMMENT 'app_name',
+  `content` LONGTEXT NOT NULL COMMENT 'content',
+  `md5` VARCHAR(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` TEXT COMMENT 'source user',
+  `src_ip` VARCHAR(50) DEFAULT NULL COMMENT 'source ip',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfotag_datagrouptenanttag` 
+(`data_id`,`group_id`,`tenant_id`,`tag_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_tag';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_tags_relation   */
+/******************************************/
+CREATE TABLE `config_tags_relation` (
+  `id` BIGINT(20) NOT NULL COMMENT 'id',
+  `tag_name` VARCHAR(128) NOT NULL COMMENT 'tag_name',
+  `tag_type` VARCHAR(64) DEFAULT NULL COMMENT 'tag_type',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT 'tenant_id',
+  `nid` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`nid`),
+  UNIQUE KEY `uk_configtagrelation_configidtag` 
+(`id`,`tag_name`,`tag_type`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_tag_relation';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = group_capacity   */
+/******************************************/
+CREATE TABLE `group_capacity` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `group_id` VARCHAR(128) NOT NULL DEFAULT '' COMMENT 'Group ID，空字符表示整
+个集群',
+  `quota` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数，，0表示使用默认值',
+  `max_aggr_size` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+
+
+
+=== 第 12 页 ===
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_group_id` (`group_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='集群、各Group
+容量信息表';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = his_config_info   */
+/******************************************/
+CREATE TABLE `his_config_info` (
+  `id` BIGINT(64) UNSIGNED NOT NULL,
+  `nid` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `data_id` VARCHAR(255) NOT NULL,
+  `group_id` VARCHAR(128) NOT NULL,
+  `app_name` VARCHAR(128) DEFAULT NULL COMMENT 'app_name',
+  `content` LONGTEXT NOT NULL,
+  `md5` VARCHAR(32) DEFAULT NULL,
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `src_user` TEXT,
+  `src_ip` VARCHAR(50) DEFAULT NULL,
+  `op_type` CHAR(10) DEFAULT NULL,
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`nid`),
+  KEY `idx_gmt_create` (`gmt_create`),
+  KEY `idx_gmt_modified` (`gmt_modified`),
+  KEY `idx_did` (`data_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='多租户改造';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = tenant_capacity   */
+/******************************************/
+CREATE TABLE `tenant_capacity` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` VARCHAR(128) NOT NULL DEFAULT '' COMMENT 'Tenant ID',
+  `quota` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数',
+  `max_aggr_size` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_id` (`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='租户容量信息
+表';
+
+
+
+=== 第 13 页 ===
+
+ 
+1.2.4.3、测试启动nacos
+ 
+进入nacos安装路径的bin目录，通过如下命令启动nacos
+CREATE TABLE `tenant_info` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `kp` VARCHAR(128) NOT NULL COMMENT 'kp',
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT 'tenant_id',
+  `tenant_name` VARCHAR(128) DEFAULT '' COMMENT 'tenant_name',
+  `tenant_desc` VARCHAR(256) DEFAULT NULL COMMENT 'tenant_desc',
+  `create_source` VARCHAR(32) DEFAULT NULL COMMENT 'create_source',
+  `gmt_create` BIGINT(20) NOT NULL COMMENT '创建时间',
+  `gmt_modified` BIGINT(20) NOT NULL COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_info_kptenantid` (`kp`,`tenant_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='tenant_info';
+CREATE TABLE `users` (
+    `username` VARCHAR(50) NOT NULL PRIMARY KEY,
+    `password` VARCHAR(500) NOT NULL,
+    `enabled` BOOLEAN NOT NULL
+);
+CREATE TABLE `roles` (
+    `username` VARCHAR(50) NOT NULL,
+    `role` VARCHAR(50) NOT NULL,
+    UNIQUE INDEX `idx_user_role` (`username` ASC, `role` ASC) USING BTREE
+);
+CREATE TABLE `permissions` (
+    `role` VARCHAR(50) NOT NULL,
+    `resource` VARCHAR(255) NOT NULL,
+    `action` VARCHAR(8) NOT NULL,
+    UNIQUE INDEX `uk_role_permission` (`role`,`resource`,`action`) USING 
+BTREE
+);
+INSERT INTO users (username, PASSWORD, enabled) VALUES ('nacos', 
+'$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
+INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+./startup.sh start
+
+
+
+=== 第 14 页 ===
+
+ 
+查看启动完成以后的日志文件（/root/software/nacos/logs/start.out）
+从日志中可以看出nacos集群已经正常启动了，注意：启动单个nacos时，一定要保证另外两
+台虚拟机是启动状态，否则出错。
+在浏览器中输入http://192.168.217.133:8845/nacos，进入集群管理，查看节点列表，结果如
+下：
+ 
+cat /root/software/nacos/logs/start.out
+
+
+
+=== 第 15 页 ===
+
+1.2.5、组建nacos集群
+ 
+用同样的方式分别在另外两台虚拟机上安装jdk和nacos即可，不需要安装mysql。注意如下配置：
+配置conf/application.propertis文件
+修改nacos的端口，192.168.217.134主机使用的端口是8847，192.168.217.135主机使
+用的端口是8846
+，修改数据库连接，连接到192.168.217.133主机的mysql。用户名为root，密码为
+Xiaoye_123
+配置cluster.conf文件
+拷贝cluster.conf.example文件，，生成cluster.conf文件
+在cluster.conf文件中配置三台主机的id以及nacos的服务端口
+配置bin/startup.sh文件
+修改nacos启动占用的内存。
+测试集群，都配置好以后，进入到bin目录下，通过如下命令启动nacos，并查看日志
+如果最后一行出现如下内容，则说明集群启动成功了。
+在浏览器中输入任意一个nacos图形工具，查看节点列表，发现三个节点都处于up状态了，
+也说明集群配置成功了。
+ 
+1.2.6、安装nginx
+ 
+在三台虚拟机中任意找一台虚拟机（硬盘空间足够大的虚拟机），因为我的192.168.217.133的虚
+拟机硬盘空间不足，所以这里就将nginx安装到192.168.217.134的虚拟机上了。
+1.2.6.1、安装nginx
+ 
+添加官方源仓库
+#启动nacos
+./startup.sh start
+#查看日志
+cat /root/software/nacos/logs/start.out
+Nacos started successfully in cluster mode. use external storage
+yum install -y yum-utils
+yum-config-manager --add-repo 
+https://openresty.org/package/centos/openresty.repo
+
+
+
+=== 第 16 页 ===
+
+安装openresty
+安装完成以后可以进入到/usr/local/openresty目录下查看安装的nginx
+nginx反向代理配置
+进入nginx的conf目录，修改nginx.conf配置文件，将该内容保存到http{}的大括号中。注意
+不要保存到server的大括号中去了，最好保存到http结束的反大括号前面。这段配置可以按
+照如下方式理解：
+首先nginx监听8888端口，当8888端口收到/nacos请求以后，会进过反向代理
+（proxy_pass）将请求转发到http://nacoscluster主机对于的nacos目录下，而http://n
+yum install -y openresty
+cd /usr/local/openresty
+
+
+
+=== 第 17 页 ===
+
+acoscluster主机就是我们配置的集群。
+启动nginx
+进入sbin目录，里面只有一个nginx文件，通过如下命令启动nginx
+1.2.6.2、测试nginx反向代理
+ 
+启动nginx以后，在浏览器中输入http:192.168.217.134:8888/nacos，会看到如下结果，输入账
+号密码以后，查看节点列表：
+当在节点列表中看到了三个属于up状态的节点，则说明nginx方向代理安装成功了。
+upstream nacoscluster{
+    server 192.168.217.133:8845;
+    server 192.168.217.134:8847;
+    server 192.168.217.135:8846;
+}
+server{
+    listen 8888;
+    server_name localhost;
+    
+    location /nacos/{
+        proxy_pass http://nacoscluster/nacos/;
+    }
+}
+./nginx    #注意：启动nginx不需要带start
+
+
+
+=== 第 18 页 ===
+
+ 
+1.3、测试项目功能
+ 
+1.3.1、测试项目注册
+ 
+修改stock-nacos项目的bootstrap.yml文件，将注册地址配置成nginx的地址。服务配置地址也配
+置成nginx的地址。用同样的方式也将order-nacos项目配置了。
+配置完成以后启动这两个项目，在浏览器中输入http://192.168.217.134:8888/nacos请求，查看
+服务列表：发现项目都已经注册了。
+如果有兴趣，也可以分别进入到三台虚拟机的nacos管理界面，发现这两个项目的注册信息
+在三个平台上都注册了。
+server:
+  port: 9001
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.217.134:8888
+      config:
+        server-addr: 192.168.217.134:8888
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+=== 第 19 页 ===
+
+ 
+1.3.2、测试项目功能
+ 
+项目通过nginx注册成功以后，在浏览器中输入http://localhost:8001/addOrder请求，查看结
+果，发现请求已经发送到了提供者（stock-nacos），并且获得了提供者提供的数据。说明整个集
+群完全搭建成功了。
+ 
+二、docker环境下搭建nacos集群
+ 
+2.1、docker下搭建nacos单体环境
+ 
+也可以不用docker,直接下载linux环境下的nacos1.4.1版本，然后进项按装解压
+2.1.1、拉取镜像
+ 
+搜索nacos镜像源
+拉取指定版本的镜像，注意：版本必须是1.4.1的。
+docker search nacos
+docker pull nacos/nacos-server:1.4.1
+
+
+
+=== 第 20 页 ===
+
+ 
+2.1.2、配置naocs服务端
+ 
+新建nacos挂载目录
+修改配置文件custom.properties
+Nacos本身采用的是基于内存的mysql数据库，在机器重启后相关配置都没了，所以需要配置
+自定义的mysql数据源，如果是本地，也不能直接用127.0.0.1，因为docker容器也有对应的
+IP,所以需要查看一下对应的IP地址。
+注意：使用的myql版本必须在5.7版本以上（包括5.7版本）,这里用的是docker中的mysql数
+据库
+具体如何在docker中创建mysql容器，请查看docker相关教程。
+mysql容器创建完成以后，需要在容器中创建nacos_server数据库。注意修改数据库的
+字符集
+这里使用的端口是12345，密码是123456，这是在创建mysql容器的时候设置的。
+mkdir -p /mydata/nacos/logs/ # 新建logs目录
+mkdir -p /mydata/nacos/init.d/
+
+
+
+=== 第 21 页 ===
+
+custom.properties完整配置信息
+spring.datasource.platform=mysql
+db.num=1
+# 这里要对应ip，以及对应的数据库
+db.url.0=jdbc:mysql://192.168.217.133:12345/nacos_server?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true
+db.user=root
+db.password=123456
+server.contextPath=/nacos
+server.servlet.contextPath=/nacos
+server.port=8848
+spring.datasource.platform=mysql
+db.num=1
+# 这里要对应ip，以及对应的数据库
+db.url.0=jdbc:mysql://192.168.217.133:12345/nacos_server?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true
+db.user=root
+db.password=123456
+nacos.cmdb.dumpTaskInterval=3600
+nacos.cmdb.eventTaskInterval=10
+nacos.cmdb.labelTaskInterval=300
+nacos.cmdb.loadDataAtStart=false
+management.metrics.export.elastic.enabled=false
+management.metrics.export.influx.enabled=false
+server.tomcat.accesslog.enabled=true
+server.tomcat.accesslog.pattern=%h %l %u %t "%r" %s %b %D %{User-Agent}i
+nacos.security.ignore.urls=/,/**/*.css,/**/*.js,/**/*.html,/**/*.map,/**/*.s
+vg,/**/*.png,/**/*.ico,/console-
+fe/public/**,/v1/auth/login,/v1/console/health/**,/v1/cs/**,/v1/ns/**,/v1/cm
+db/**,/actuator/**,/v1/console/server/**
+nacos.naming.distro.taskDispatchThreadCount=1
+nacos.naming.distro.taskDispatchPeriod=200
+
+
+
+=== 第 22 页 ===
+
+通过如下面命令修改custom.properties文件，将上述内容复制进去即可。
+ 
+2.1.3、运行nacos镜像
+ 
+前面的配置完成以后就可以通过如下命令运行镜像，生成容器了。
+这里是以单机模式启动的（ MODE=standalone）
+在运行nacos镜像之前需要前启动mysql容器。
+运行镜像时会自动创建并启动容器，可以通过http://192.168.217.133:8848/nacos/index.html地
+址访问虚拟机中的nacos管理器。
+nacos.naming.distro.batchSyncKeyCount=1000
+nacos.naming.distro.initDataRatio=0.9
+nacos.naming.distro.syncRetryDelay=5000
+nacos.naming.data.warmup=true
+nacos.naming.expireInstance=true
+vim /mydata/nacos/init.d/custom.properties # 修改配置文件
+docker run --name nacos -p 8848:8848 \
+--privileged=true \
+--restart=always \
+-e JVM_XMS=256m \
+-e JVM_XMX=256m \
+-e MODE=standalone \
+-e PREFER_HOST_MODE=hostname \
+-v /mydata/nacos/logs:/home/nacos/logs \
+-v 
+/mydata/nacos/init.d/custom.properties:/home/nacos/init.d/custom.properties 
+\
+-d nacos/nacos-server:1.4.1
+
+
+
+=== 第 23 页 ===
+
+ 
+2.1.4、启动nacos容器
+ 
+可以通过如下命令启动容器，因为容器名称叫nacos，所以下面命令可以直接使用。
+容器启动以后，只需要进入idea,将项目在nacos中的注册地址改成linux中nacos容器地址，就可以
+在管理平台看到注册的信息了。
+例如下配置的order-nacos项目的application.yml文件配置，将stock-nacos项目也一样配
+置。
+注意：springcloud alibaba中，全局配置文件名称叫做bootstrap.yml更正规，如果不
+叫这个名称，可能会出现如下异常，所以我们有必要将application.yml改名为
+bootstrap.yml，如果叫application.yml，则只会到本地电脑的nacos注册，如果到虚拟
+机上的nacos注册中心注册，则会出现如下异常，但是依然可以正常使用。
+查看虚拟机的nacos中的服务列表信息，结果如下：
+docker start nacos
+The maximum number of tolerable server reconnection errors has been 
+reached
+server:
+  port: 8001
+spring:
+  application:
+    name: order-service
+cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.217.133:8848
+      config:
+        server-addr: 192.168.217.133:8848
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+=== 第 24 页 ===
+
+ 
+2.1.5、测试功能
+ 
+启动nacos容器，运行order-nacos项目和stock-nacos项目，在浏览器中输入http://localhost:800
+1/addOrder请求，查看结果，发现请求已经从order-nacos项目发送到了stock-nacos项目，并获
+取了数据。
+ 
+2.2、docker下搭建nacos集群环境
+ 
+搭建nacos集群的前提条件是需要先关闭防火墙，只需要一台虚拟机即可，需要在安装jdk，mysql
+和nginx，另外创建三个naocs的容器。
+安装顺序：JDK-->mysql-->三个nacos容器-->nginx
+2.2.1、创建mysql数据库
+ 
+拉取mysql5.7版本的镜像，按如下命令允许镜像
+启动mysql5.7容器（mysql的版本不得低于5.7），使用sqlyog工具连接容器，创建nacos_config
+数据库，并创建nacos的配置表
+docker run -p 12345:3306 --name mysql -v 
+/mydocker/mysql/conf:/etc/mysql/mysql.conf.d -v /mydocker/mysql/logs:/logs -
+v /mydocker/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 --
+privileged=true -d mysql:5.7
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/******************************************/
+create database nacos_config;
+use nacos_config;
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info   */
+/******************************************/
+
+
+
+=== 第 25 页 ===
+
+CREATE TABLE `config_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(255) DEFAULT NULL,
+  `content` longtext NOT NULL COMMENT 'content',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `c_desc` varchar(256) DEFAULT NULL,
+  `c_use` varchar(64) DEFAULT NULL,
+  `effect` varchar(64) DEFAULT NULL,
+  `type` varchar(64) DEFAULT NULL,
+  `c_schema` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfo_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='config_info';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_aggr   */
+/******************************************/
+CREATE TABLE `config_info_aggr` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(255) NOT NULL COMMENT 'group_id',
+  `datum_id` varchar(255) NOT NULL COMMENT 'datum_id',
+  `content` longtext NOT NULL COMMENT '内容',
+  `gmt_modified` datetime NOT NULL COMMENT '修改时间',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfoaggr_datagrouptenantdatum` 
+(`data_id`,`group_id`,`tenant_id`,`datum_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='增加租户字段';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_beta   */
+/******************************************/
+CREATE TABLE `config_info_beta` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+  `beta_ips` varchar(1024) DEFAULT NULL COMMENT 'betaIps',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+
+
+
+=== 第 26 页 ===
+
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfobeta_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_beta';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_tag   */
+/******************************************/
+CREATE TABLE `config_info_tag` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `tag_id` varchar(128) NOT NULL COMMENT 'tag_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfotag_datagrouptenanttag` 
+(`data_id`,`group_id`,`tenant_id`,`tag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_tag';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_tags_relation   */
+/******************************************/
+CREATE TABLE `config_tags_relation` (
+  `id` bigint(20) NOT NULL COMMENT 'id',
+  `tag_name` varchar(128) NOT NULL COMMENT 'tag_name',
+  `tag_type` varchar(64) DEFAULT NULL COMMENT 'tag_type',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `nid` bigint(20) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`nid`),
+  UNIQUE KEY `uk_configtagrelation_configidtag` 
+(`id`,`tag_name`,`tag_type`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_tag_relation';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = group_capacity   */
+
+
+
+=== 第 27 页 ===
+
+/******************************************/
+CREATE TABLE `group_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `group_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Group ID，空字符表示整
+个集群',
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数，，0表示使用默认值',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_group_id` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='集群、各Group
+容量信息表';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = his_config_info   */
+/******************************************/
+CREATE TABLE `his_config_info` (
+  `id` bigint(64) unsigned NOT NULL,
+  `nid` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `data_id` varchar(255) NOT NULL,
+  `group_id` varchar(128) NOT NULL,
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL,
+  `md5` varchar(32) DEFAULT NULL,
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `src_user` text,
+  `src_ip` varchar(50) DEFAULT NULL,
+  `op_type` char(10) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`nid`),
+  KEY `idx_gmt_create` (`gmt_create`),
+  KEY `idx_gmt_modified` (`gmt_modified`),
+  KEY `idx_did` (`data_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='多租户改造';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = tenant_capacity   */
+/******************************************/
+CREATE TABLE `tenant_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Tenant ID',
+
+
+
+=== 第 28 页 ===
+
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='租户容量信息
+表';
+CREATE TABLE `tenant_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `kp` varchar(128) NOT NULL COMMENT 'kp',
+  `tenant_id` varchar(128) default '' COMMENT 'tenant_id',
+  `tenant_name` varchar(128) default '' COMMENT 'tenant_name',
+  `tenant_desc` varchar(256) DEFAULT NULL COMMENT 'tenant_desc',
+  `create_source` varchar(32) DEFAULT NULL COMMENT 'create_source',
+  `gmt_create` bigint(20) NOT NULL COMMENT '创建时间',
+  `gmt_modified` bigint(20) NOT NULL COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_info_kptenantid` (`kp`,`tenant_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='tenant_info';
+CREATE TABLE `users` (
+    `username` varchar(50) NOT NULL PRIMARY KEY,
+    `password` varchar(500) NOT NULL,
+    `enabled` boolean NOT NULL
+);
+CREATE TABLE `roles` (
+    `username` varchar(50) NOT NULL,
+    `role` varchar(50) NOT NULL,
+    UNIQUE INDEX `idx_user_role` (`username` ASC, `role` ASC) USING BTREE
+);
+CREATE TABLE `permissions` (
+    `role` varchar(50) NOT NULL,
+    `resource` varchar(255) NOT NULL,
+    `action` varchar(8) NOT NULL,
+    UNIQUE INDEX `uk_role_permission` (`role`,`resource`,`action`) USING 
+BTREE
+);
+INSERT INTO users (username, password, enabled) VALUES ('nacos', 
+'$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
+
+
+
+=== 第 29 页 ===
+
+ 
+2.2.2、启动nacos容器
+ 
+docker搭建nacos集群的常用配置：https://nacos.io/zh-cn/docs/quick-start-docker.html
+ 
+在虚拟机上都拉取nacos1.4.1版本的镜像
+ 
+按照如下命令启动三个nacos镜像。
+启动命令的理解
+INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+docker pull nacos/nacos-server:1.4.1
+
+
+
+=== 第 30 页 ===
+
+-e PREFER_HOST_MODE=hostname 表示：支持以主机名（hostname表示主机名）方
+式发访问。
+-e MODE=cluste-e MODE=cluster 表示：以集群模式运行
+-e NACOS_APPLICATION_PORT=8848 表示：这台Nacos服务的端口是8848
+-e NACOS_SERVERS="192.168.217.133:8848 192.168.217.134:8849 
+192.168.217.135:8850" 表示：Nacos集群的所有机器的信息，多个ip地址之间使用空
+格间隔，可以尝试一下用逗号似乎也可以
+-e SPRING_DATASOURCE_PLATFORM=mysql 表示：使用外置MySQL存储配置信息
+-e MYSQL_SERVICE_HOST=192.168.217.133 表示：外置MySQL的IP地址
+-e MYSQL_SERVICE_PORT=12345 表示：外置MySQL的端口
+-e MYSQL_SERVICE_USER=root 表示外置MySQL的用户名
+-e MYSQL_SERVICE_PASSWORD=123456 表示外置MySQL的密码
+-e MYSQL_SERVICE_DB_NAME=nacos_config 表示：外置MySQL的数据库，也就是
+Nacos的配置文件要存储得到哪个数据库，这个在单机版Nacos使用外置数据库时候介
+绍过
+-e NACOS_SERVER_IP=192.168.217.133 表示这台Nacos服务的IP地址
+-p 8848:8848 表示：表示暴露端口，即容器外部端口映射
+--name nacos01 表示：给nacos容器取的容器名称
+-d nacos/nacos-server:1.4.1 表示：以后台模式运行nacos-server.1.4.1版本镜像。
+ 
+按照如上格式，启动三台虚拟机上的nacos镜像
+启动192.168.217.135主机上的nacos的指令
+#第一台nacos镜像
+docker run \
+-e PREFER_HOST_MODE=hostname \
+-e MODE=cluster \
+-e NACOS_APPLICATION_PORT=8848 \
+-e NACOS_SERVERS="192.168.217.135:8848 192.168.217.135:8849 
+192.168.217.135:8850" \
+-e SPRING_DATASOURCE_PLATFORM=mysql \
+-e MYSQL_SERVICE_HOST=192.168.217.135\
+-e MYSQL_SERVICE_PORT=12345 \
+-e MYSQL_SERVICE_USER=root \
+-e MYSQL_SERVICE_PASSWORD=123456 \
+-e MYSQL_SERVICE_DB_NAME=nacos_config \
+-e NACOS_SERVER_IP=192.168.217.135 \
+-e JVM_XMS=512m \
+-e JVM_XMX=512m \
+-e JVM_XMN=256m \
+-p 8848:8848 \
+--name my-nacos1 \
+-d nacos/nacos-server:1.4.1
+#第二台nacos镜像
+docker run \
+-e PREFER_HOST_MODE=hostname \
+-e MODE=cluster \
+-e NACOS_APPLICATION_PORT=8849 \
+-e NACOS_SERVERS="192.168.217.135:8848 192.168.217.135:8849 
+192.168.217.135:8850" \
+-e SPRING_DATASOURCE_PLATFORM=mysql \
+-e MYSQL_SERVICE_HOST=192.168.217.135 \
+
+
+
+=== 第 31 页 ===
+
+ 
+如果容器启动不报错，但是无法通过浏览器连接上对应的nacos控制台，则可以通过如下方法查看
+日志
+在日志中我们可能看到如下异常
+当出现上述异常的时候，有可能是应为mysql容器没有启动，我们需要先启动mysql容器，然后启
+动nacos集群。
+当出现安装时WARNING: IPv4 forwarding is disabled. Networking will not work.内容时，也可
+能会导致数据库连接不成功，
+-e MYSQL_SERVICE_PORT=12345 \
+-e MYSQL_SERVICE_USER=root \
+-e MYSQL_SERVICE_PASSWORD=123456 \
+-e MYSQL_SERVICE_DB_NAME=nacos_config \
+-e NACOS_SERVER_IP=192.168.217.135 \
+-e JVM_XMS=512m \
+-e JVM_XMX=512m \
+-e JVM_XMN=256m \
+-p 8849:8849 \
+--name my-nacos2 \
+-d nacos/nacos-server:1.4.1
+#第三台虚拟机的nacos
+docker run \
+-e PREFER_HOST_MODE=hostname \
+-e MODE=cluster \
+-e NACOS_APPLICATION_PORT=8850 \
+-e NACOS_SERVERS="192.168.217.135:8848 192.168.217.135:8849 
+192.168.217.135:8850" \
+-e SPRING_DATASOURCE_PLATFORM=mysql \
+-e MYSQL_SERVICE_HOST=192.168.217.135 \
+-e MYSQL_SERVICE_PORT=12345 \
+-e MYSQL_SERVICE_USER=root \
+-e MYSQL_SERVICE_PASSWORD=123456 \
+-e MYSQL_SERVICE_DB_NAME=nacos_config \
+-e NACOS_SERVER_IP=192.168.217.135 \
+-e JVM_XMS=512m \
+-e JVM_XMX=512m \
+-e JVM_XMN=256m \
+-p 8850:8850 \
+--name my-nacos3 \
+-d nacos/nacos-server:1.4.1
+docker logs 容器名称
+Caused by: java.sql.SQLNonTransientConnectionException: Could not create 
+connection to database server. Attempted reconnect 3 times. Giving up.
+    
+Caused by: com.mysql.cj.exceptions.CJCommunicationsException: Communications 
+link failure
+Caused by: java.net.SocketTimeoutException: connect timed out
+
+
+
+=== 第 32 页 ===
+
+此时需要进项如下配置，一定要先确保防火墙关闭
+验证集群搭建成功
+分别打开三个容器的日志文件，查看日志，如果最下面出现如下内容，则说明当前主机
+属于正常启动
+很多时候启动nacos容器以后并不会直接出现 Nacos started successfully in cluster 
+mode. use external storage，而是出现如下图结果，需要等一段时间才会出现上述成
+功启动了集群的提示
+分别使用不同的ip地址和端口，在浏览器中查看是否 能进nacos控制台界面，如果都能
+进，则说明都正常启动了。点击集群管理，到节点列表，查看到如下界面，则说明集群
+vi /usr/lib/sysctl.d/00-system.conf
+添加如下代码：
+net.ipv4.ip_forward=1
+重启network服务
+systemctl restart network
+ Nacos started successfully in cluster mode. use external storage
+
+
+
+=== 第 33 页 ===
+
+搭建成功了。
+ 
+ 
+nacos集群优化
+因为nacos默认使用大小是2g，占用了太多的内存资源，当启动springboot应用服务进行注
+册时，可能会出现如下异常：
+上面截图中的含义：
+Xms 是指设定程序启动时占用内存大小
+Xmx 是指设定程序运行期间最大可占用的内存大小 
+Xmn 新生代的大小 
+这个提示是说nacos服务器过载，所以需要收敛资源，所以我们需要手动配置nacos运行所占
+用的内存大小：
+我们使用的是docker容器下的nacos，很难直接修改，在运行镜像，生成容器时进行如
+下配置（其他两个默认即可）：
+http://192.168.217.135:8848/nacos/index.html
+http://192.168.217.135:8849/nacos/index.html
+http://192.168.217.135:8850/nacos/index.html
+Caused by: com.alibaba.nacos.api.exception.NacosException:failed to req 
+API:/nacos/v1/ns/instance after all servers([192.168.217.133:8080]) tried: 
+ErrCode:503, ErrMsg:server is DOWN now, please try again later!
+    
+ org.springframework.context.ApplicationContextException:Failed to start 
+bean 'webServerStartStop'; nested exception is java.lang.reflect    
+-e JVM_XMS=512m
+-e JVM_XMX=512m
+-e JVM_XMN=256m
+
+
+
+=== 第 34 页 ===
+
+前面使用的启动容器的命令是已经调整好的，启动容器，注意修改容器名称和端口。
+创建完成以后，查看容器日志，可以看到内存配置已经被修改了。
+ 
+2.2.3、安装nginx
+ 
+nginx在nacos集群中的作用是对用户请求进行分发，对nacos集群中各个注册中心实现负载均
+衡，nginx的默认负载均衡策略是轮询策略。可以适当使用比较新的nginx版本，我这里是使用
+latest版本，目前最新版本是nginx1.21.4。
+拉取nginx镜像：可以任意选择一台虚拟机安装nginx，我这里就安装到192.168.217.133的虚拟
+机。
+docker run \
+-e PREFER_HOST_MODE=hostname \
+-e MODE=cluster \
+-e NACOS_APPLICATION_PORT=8848 \
+-e NACOS_SERVERS="192.168.217.135:8848 192.168.217.135:8849 
+192.168.217.135:8850" \
+-e SPRING_DATASOURCE_PLATFORM=mysql \
+-e MYSQL_SERVICE_HOST=192.168.217.135 \
+-e MYSQL_SERVICE_PORT=12345 \
+-e MYSQL_SERVICE_USER=root \
+-e MYSQL_SERVICE_PASSWORD=123456 \
+-e MYSQL_SERVICE_DB_NAME=nacos_config \
+-e NACOS_SERVER_IP=192.168.217.133 \
+-e JVM_XMS=512m \
+-e JVM_XMX=512m \
+-e JVM_XMN=256m \
+-p 8848:8848 \
+--name my-nacos1 \
+-d nacos/nacos-server:1.4.1
+docker pull nginx
+
+
+
+=== 第 35 页 ===
+
+运行镜像启动容器
+配置nginx配置文件
+将容器内部的/etc/nginx/nginx.conf文件拷贝到/root目录下，然后进行修改，命令如下
+在宿主机中修改nginx.conf文件内容
+upstream cluster配置的是nacos集群的位置
+docker run --name my-nginx -p 8080:8080 -d nginx
+#docker cp 容器名称:/etc/nginx/nginx.conf 宿主机的目标路径
+docker cp my-nginx:/etc/nginx/nginx.conf /root
+upstream cluster{
+        server 192.168.217.135:8848;
+        server 192.168.217.135:8849;
+        server 192.168.217.135:8850;
+    }
+
+
+
+=== 第 36 页 ===
+
+ 
+如下配置表示nginx监听8080端口，当通过8080端口访问nginx时，proxy_pass反向代
+理将请求转发到http://cluster/地址的nacos，而这个地址正是nacos的集群地址。
+在nginx.conf文件的http块加上下面这段配置，这段代码必须保存到http代码块中，否
+则启动会报错，这段代码直接保存到结束部分的反大括号上面即可。
+修改完成以后将改nginx.conf文件重新拷贝到容器的/etc/nginx/目录下，然后重启nginx容
+器。
+server {
+        listen 8080;
+        server_name localhost;
+        location /nacos/{
+                 proxy_pass http://cluster/nacos/;
+        }
+    }
+upstream cluster{
+        server 192.168.217.135:8848;
+        server 192.168.217.135:8849;
+        server 192.168.217.135:8850;
+    }
+    
+    server {
+         listen 8080;
+        server_name localhost;
+        location /nacos/{
+                 proxy_pass http://cluster/nacos/;
+        }
+    }
+
+
+
+=== 第 37 页 ===
+
+ 
+2.3、测试集群
+ 
+2.3.1、负载均衡访问nacos
+ 
+先启动mysql容器，然后启动三个nacos容器，最后启动nginx容器，在浏览器中输入http://192.1
+68.217.135:8080/nacos，查看页面显示结果
+输入用户名和密码（用户名和密码都是nacos），进入集群管理，查看节点列表，发现如下结果则
+说明集群搭建成功了。
+ 
+2.3.2、测试项目注册
+ 
+修改stock-nacos项目的bootstrap.yml文件，将注册地址和配置地址修改成nginx的地址，同样的
+将order-nacos也一样修改了。
+之所以配置192.168.217.135:8080是因为nginx安装到了IP地址为192.168.217.135的虚拟
+机。
+#docker cp 宿主级路径 容器名称:目标路径名称
+docker cp /root/nginx.conf my-nginx:/etc/nginx
+server:
+
+
+
+=== 第 38 页 ===
+
+启动项目stock-nacos，order-nacos项目，如果控制台没出错，查看http://192.168.217.135:808
+0/nacos地址下的服务列表，如果在服务列表中出现了这两个项目的应用名称，则说明注册成功。
+ 
+ 
+2.3.3、测试项目的数据交互
+ 
+在浏览器中输入http://localhost:8001/addOrder请求，用于检查消费者是否能收到提供者提供的
+数据，可以看出结果也是正常的。
+ 
+ 
+三、windows环境下搭建nacos集群
+ 
+3.1、创建数据库
+ 
+打开nacos，进入conf目录，找到mysql-schema.sql文件，将该文件的代码运行，从而创
+nacos_config数据库以及表。
+注意：原始的mysql-schema.sql文件要求mysql版本最低为5.7。
+datetime与timestamp的区别：
+5.7以前，datetime如果不给值，则默认值是null，timestamp如果不给值则默认
+值是当前时间CURRENT_TIMESTAMP
+5.7以后：datetime与timestamp是一样的，如果不给值，则默认值都是null.
+  port: 9001
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.217.135:8080
+      config:
+        server-addr: 192.168.217.135:8080
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+=== 第 39 页 ===
+
+/*
+ * Copyright 1999-2018 Alibaba Group Holding Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info   */
+/******************************************/
+CREATE TABLE `config_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) DEFAULT NULL,
+  `content` longtext NOT NULL COMMENT 'content',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `c_desc` varchar(256) DEFAULT NULL,
+  `c_use` varchar(64) DEFAULT NULL,
+  `effect` varchar(64) DEFAULT NULL,
+  `type` varchar(64) DEFAULT NULL,
+  `c_schema` text,
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfo_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='config_info';
+
+
+
+=== 第 40 页 ===
+
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_aggr   */
+/******************************************/
+CREATE TABLE `config_info_aggr` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `datum_id` varchar(255) NOT NULL COMMENT 'datum_id',
+  `content` longtext NOT NULL COMMENT '内容',
+  `gmt_modified` datetime NOT NULL COMMENT '修改时间',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfoaggr_datagrouptenantdatum` 
+(`data_id`,`group_id`,`tenant_id`,`datum_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='增加租户字段';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_beta   */
+/******************************************/
+CREATE TABLE `config_info_beta` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+  `beta_ips` varchar(1024) DEFAULT NULL COMMENT 'betaIps',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfobeta_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_beta';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_tag   */
+/******************************************/
+CREATE TABLE `config_info_tag` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `tag_id` varchar(128) NOT NULL COMMENT 'tag_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+
+
+
+=== 第 41 页 ===
+
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfotag_datagrouptenanttag` 
+(`data_id`,`group_id`,`tenant_id`,`tag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_tag';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_tags_relation   */
+/******************************************/
+CREATE TABLE `config_tags_relation` (
+  `id` bigint(20) NOT NULL COMMENT 'id',
+  `tag_name` varchar(128) NOT NULL COMMENT 'tag_name',
+  `tag_type` varchar(64) DEFAULT NULL COMMENT 'tag_type',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `nid` bigint(20) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`nid`),
+  UNIQUE KEY `uk_configtagrelation_configidtag` 
+(`id`,`tag_name`,`tag_type`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_tag_relation';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = group_capacity   */
+/******************************************/
+CREATE TABLE `group_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `group_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Group ID，空字符表示整
+个集群',
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数，，0表示使用默认值',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_group_id` (`group_id`)
+
+
+
+=== 第 42 页 ===
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='集群、各Group
+容量信息表';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = his_config_info   */
+/******************************************/
+CREATE TABLE `his_config_info` (
+  `id` bigint(20) unsigned NOT NULL,
+  `nid` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `data_id` varchar(255) NOT NULL,
+  `group_id` varchar(128) NOT NULL,
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL,
+  `md5` varchar(32) DEFAULT NULL,
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `src_user` text,
+  `src_ip` varchar(50) DEFAULT NULL,
+  `op_type` char(10) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`nid`),
+  KEY `idx_gmt_create` (`gmt_create`),
+  KEY `idx_gmt_modified` (`gmt_modified`),
+  KEY `idx_did` (`data_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='多租户改造';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = tenant_capacity   */
+/******************************************/
+CREATE TABLE `tenant_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Tenant ID',
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='租户容量信息
+表';
+CREATE TABLE `tenant_info` (
+
+
+
+=== 第 43 页 ===
+
+ 
+3.2、下载nacos安装包
+ 
+这里已经下载了naocs2.2.2，就不再下载了。
+将下载的nacos解压，并自己根据需要命名(nacos-cluster01)
+ 
+3.3、配置nacos
+ 
+3.3.1、配置startup.cmd
+ 
+下载完成以后直接解压nacos，注意/bin/startup.cmd文件中的默认配置就是集群模式，所以不需
+要调整，使用默认配置即可。
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `kp` varchar(128) NOT NULL COMMENT 'kp',
+  `tenant_id` varchar(128) default '' COMMENT 'tenant_id',
+  `tenant_name` varchar(128) default '' COMMENT 'tenant_name',
+  `tenant_desc` varchar(256) DEFAULT NULL COMMENT 'tenant_desc',
+  `create_source` varchar(32) DEFAULT NULL COMMENT 'create_source',
+  `gmt_create` bigint(20) NOT NULL COMMENT '创建时间',
+  `gmt_modified` bigint(20) NOT NULL COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_info_kptenantid` (`kp`,`tenant_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='tenant_info';
+CREATE TABLE `users` (
+    `username` varchar(50) NOT NULL PRIMARY KEY,
+    `password` varchar(500) NOT NULL,
+    `enabled` boolean NOT NULL
+);
+CREATE TABLE `roles` (
+    `username` varchar(50) NOT NULL,
+    `role` varchar(50) NOT NULL,
+    UNIQUE INDEX `idx_user_role` (`username` ASC, `role` ASC) USING BTREE
+);
+CREATE TABLE `permissions` (
+    `role` varchar(50) NOT NULL,
+    `resource` varchar(255) NOT NULL,
+    `action` varchar(8) NOT NULL,
+    UNIQUE INDEX `uk_role_permission` (`role`,`resource`,`action`) USING 
+BTREE
+);
+INSERT INTO users (username, password, enabled) VALUES ('nacos', 
+'$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
+INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+
+
+
+=== 第 44 页 ===
+
+3.3.2、配置application.properties
+ 
+进入conf目录，打开application.properties文件，因为nacos默认是内存模式存储的。如果是是
+单机模式使用，则使用内存模式就可以了（不需要进行任何修改），如果是集群模式，则需要将存
+储方式修改成保存到mysql中，只需要将如下的注释部分解开，进行调整就可以了。
+配置结果如下：
+注意修改数据库名称为：nacos_config，以及修改成自己的用户名和密码
+ 
+
+
+
+=== 第 45 页 ===
+
+ 
+ 
+3.4、配置集群
+ 
+3.4.1、配置cluster.conf
+ 
+进入conf目录，将cluster.conf.example改名为cluster.conf并打开，如果是部署在不同机器就要
+填写相应的IP地址加端口。
+注意：因为我们是在同一台机器上配置集群，所以IP地址是相同的，但是端口一定不能相
+同。
+注意：这里配置的时候必须使用真实IP地址，不要使用127.0.0.1，否则在启动服务消费者，
+调用服务提供者时会出错。
+注意：有些人在搭建集群的时候，可能端口不能连续，需要有间隔才能成功，例如：8847  
+8849   8851.
+ 
+ 
+3.4.2、复制nacos目录
+ 
+将nacos目录复制3份，必须停止nacos再复制，否则会报错
+### Default web server port:
+server.port=8848
+#使用外置mysql数据源的配置
+spring.datasource.platform=mysql
+### count of DB
+db.num=1
+###Connect URL of DB
+db.url.0=jdbc:mysql://192.168.217.133:3306/nacos_config?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true&useUnicode=true&useSSL=false&serverTimezone=UTC
+db.user.0=root
+db.password.0=Xiaoye
+
+
+
+=== 第 46 页 ===
+
+3.4.3、修改端口
+ 
+分别进入三个naocs文件中的conf目录，修改application.properties配置文件，更改端口号，与
+配置cluster.conf 时相对应。
+这里只以修改一个为例，其他两个一样修改，只要保证与cluster.conf文件中配置的端口一致
+即可。
+ 
+3.5、测试
+ 
+3.5.1、测试启动集群
+ 
+分别执行这三个nacos的/bin/startup.cmd文件，根据地址分别进入对应的nacos管理界面，如果
+出现如下图提示，则说明集群正常启动了。
+这里只以一张图为例，根据不同的端口，如果三个naocs关联界面都出现了如下图，则说明
+集群配置成功。
+ 
+ 
+3.5.2、测试项目注册
+ 
+3.5.2.1、修改全局配置文件
+ 
+修改order-web项目以及stock-service项目的全局配置文件，将服务注册地址改成集群的每一个地
+址，多个地址用逗号间隔。
+
+
+
+=== 第 47 页 ===
+
+修改order-web的全局配置文件
+修改stock-service的全局配置文件
+3.5.2.2、测试提供者与消费者
+ 
+启动order-web项目和stock-service项目，然后进入nacos的三个关联界面，如果都出现了如下图
+所示，则说明集群与各服务都能正常工作了。
+ 
+ 
+3.6、Nacos客户端信息缓存
+ 
+Nacos关闭以后，继续访问服务仍然可以使用。这是因为服务提供者，服务消费者本地都有缓存，
+保存注册中心的服务列表。
+Nacos不关闭，服务关闭。被调用过的服务也会存在在Nacos中一小会儿。这是因为不确定服务提
+供者与服务消费者的具体关闭原因，可能是因为网络问题导致无法识别，所以会保存一会。
+server:
+  port: 8001
+  tomcat:
+    uri-encoding: utf-8
+spring:
+  application:
+    name: order-web
+  cloud:
+    nacos:
+      discovery:
+      server-addr: 127.0.0.1:8847,127.0.0.1:8848,127.0.0.1:8849
+  main:
+  allow-bean-definition-overriding: true
+server:
+  port: 9001
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8847,127.0.0.1:8848,127.0.0.1:8849
+
+
+
+=== 第 48 页 ===
+
+Nacos对于调用过的服务会有缓存，缓存到本地的内存中。可以降低Nacos的压力，后续的调用直
+接从缓存中返回结果。实现高可用性。
+ 
+
+
+
+
+=== 微服务阿里巴巴课程03：负载均衡.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴课程03：负载均衡
+ 
+一、负载均衡器Ribbon
+ 
+1.1、Ribbon基本概念
+ 
+1.1.1 ribbon负载均衡概念
+ 
+负载均衡的概念
+负载均衡是指单台服务器性能达到极限时，通过服务器集群来横向增加系统的吞吐量和性能。
+目前主流的负载均衡方案，分为以下两种：
+第一种方式：集中式负载均衡（也叫服务端的负载均衡）：
+集中式负载均衡是在消费者和提供者中间使用独立的代理方式进项负载，有硬件的（例如：
+F5），也有软件的（例如：Nginx）。
+第二种方式：客户端的负载均衡
+客户端根据自己的请求情况做负载均衡，ribbon就属于客户端自己做负载均衡。
+spring cloud ribbon是基于netflix ribbon实现的一套客户端的负载均衡工具，ribbon会自动基于
+某种规则（轮询）去调用这些服务。
+1.1.2 负载均衡升级
+ 
+由于原有的负载均衡组件Ribbon停止维护，所以SpringCloud2020版本以后，官方自己造出了
+Spring Cloud LoadBalancer来代替Ribbon。
+Spring Cloud LoadBalancer已经实现了RoundBobinLoadBalancer(轮询策略)和
+RandomLoadBalancer(随机策略)
+1.2、客户端的负载均衡
+ 
+以spring cloud中的ribbon为例，客户端会有一个服务器地址列表，在发送请求前通过负载均衡算法选
+择一个服务器，然后进行访问，这是客户端负载均衡，即在客户端就进行负载均衡算法分配。
+
+
+
+=== 第 2 页 ===
+
+1.3、服务端的负载均衡
+ 
+例如nginx，通过nginx进行负载均衡，先发送请求，然后通过负载 均衡算法，在多个服务器之间选择
+一个进行访问，即在服务器端再进行负载均衡算法分配。（这个需要在nginx中配置负载均衡策略）
+1.4、常见负载均衡算法
+ 
+轮询：负载均衡默认实现方式，请求来了之后排队处理。
+随机：通过随机选择服务进行执行，一般这种方式使用的比较少。
+权重算法：权值越高，被分配的请求就越多，通过对服务器性能的分析，给高配置、低负载的服务
+器分配更高的权重，均衡各个服务器的压力。
+地址Hash：通过客户端请求的地址的Hash值取模映射进行服务器调度。
+根据ip地址进行hash得到一个数值，用这个数值进行取模（服务器数量就是取模的底数），
+最终利用得到的余数进行负载均衡。计算公式：hash(ip)%服务器数量
+hash(ip)=100，101，102       100%3=1  101%3=2 102%3=0
+1.5 常见负载均衡策略
+ 
+从上图可以看出：我们所有的负载均衡策略都需要实现IRule接口，而每一个实现类都是一种负载
+均衡策略
+1、轮询策略——RoundRobinRule，也是Ribbon的默认策略
+2、随机策略——RandomRule：随机选择一个server
+3、权重策略——NacosRule：给服务器设置权重，权重越大，被选中的概率也越大。
+ 
+二、Spring Cloud 2022负载均衡
+ 
+2.1 搭建服务提供者环境
+ 
+2.1.1 配置依赖
+ 
+Spring Cloud2022要使用负载均衡策略，需要在公共模块（common-api）中配置如下依赖（也
+可以只配置在服务消费者端）：
+
+
+
+=== 第 3 页 ===
+
+ 
+2.1.2 搭建提供者集群(方法一)
+ 
+搭建提供者集群（同一个服务提供者复制成三个服务提供者stock-service），用于测试消费者发出
+请求时，按照不同的负载均衡策略，调用不同的服务提供者，从而查看具体结果。
+通过复制原来的stock-service项目，创建出新的stock-service2，stock-service3项目，注意
+如下调整：
+复制项目以后拷贝到父项目目录下并修改成目标项目名，中途可能会提示没有找到
+application.yml文件（该文件被改成了bootstrap.yml），这个不用理会，然后导入项
+目，在导入时也将名称修改成目标项目名。
+删除项目中多余的原来项目的iml文件（stock-nacos.iml）
+修改bootstrap.yml文件，将服务端口改成9002，注意不要修改应用名称，三个提供者
+的应用名称都相同（stock-service）
+修改启动类名称（改为StockServiceApplication9002），便于运行时区分。
+修改pom.xml文件中的artifactId，取值是当前项目名称（stock-service2）
+在父项目的pom.xml文件中添加一个mudel，将这里的artifactId名称配置进去，表示该
+项目归父项目管理
+修改控制器，添加上服务端口的显示，便于测试时看到端口，从而确定具体提供者
+<!--添加负载均衡的依赖,2022以后的版本需要单独配置-->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+</dependency>
+@RestController
+@RequestMapping("/stock")
+public class StockController {
+    
+    @Value("${server.port}")
+    private Integer port;
+    
+    @RequestMapping("/updateStock")
+    public String updateStock(){
+        System.out.println("------进入了StockController的updateStock方法-
+-------");
+        //修改数据库中的库存，这里就不演示了。
+        //库存提供者提供的数据
+        return "my stock success,port:"+port;
+    }
+}  
+
+
+
+=== 第 5 页 ===
+
+ 
+ 
+2.1.3 搭建提供者集群(方法二)
+ 
+因为通过复制项目的方式创建新项目很容易出问题，所以建议直接通过创建项目的方式实现搭建服
+务提供者集群
+2.1.3.1 创建项目
+ 
+搭建提供者集群（通过手动创建mudule的方式进行），用于测试消费者发出请求时，按照不同的
+负载均衡策略，调用不同的服务提供者，从而查看具体结果。
+创建服务提供者模块
+
+
+
+=== 第 6 页 ===
+
+配置依赖：这里可以直接到stock-service的pom.xml文件中复制对应依赖。
+创建全局配置文件（application.yml），并从stock-service中复制对应配置。
+注意：必须修改当前项目使用的端口号，另外服务名称必须和前面的stock-service中
+的服务名称相同
+<dependencies>
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+server:
+  port: 9002
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/gz01?serverTimezone=UTC
+    username: root
+    password: xiaoye
+mybatis-plus:
+  type-aliases-package: com.baidu.pojo
+  mapper-locations: classpath:/mappers/*.xml
+
+
+
+=== 第 7 页 ===
+
+创建启动器
+ 
+实现功能：这里可以直接到stock-service项目，将对应功能的代码复制过来。
+ 
+   
+ 
+2.1.3.2 项目调整
+ 
+在配置服务提供者的服务名称时，一定要保证三个提供者的应用名称都相同（stock-service）
+每个服务提供者必须使用自己独立的端口。
+为了能够查看到具体是那一个服务提供者提供服务，所以在服务服务提供着的StockController控
+制器中添加一个测试方法，并返回当前服务提供者的端口号。
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class StockService2Application9002 {
+    public static void main(String[] args) {
+        SpringApplication.run(StockService2Application9002.class,args);
+    }
+}
+@RestController
+@RequestMapping("/stock")
+public class StockController {
+    @Autowired
+    private StockService service;
+    
+    @Value("${server.port}")
+    private Integer port;
+    
+    @RequestMapping("/testCluster")
+    public String testClu(){
+        System.out.println("-----testClu-------");
+        
+        return "服务提供者调用成功，当前服务提供者的端口port="+port;
+
+
+
+=== 第 8 页 ===
+
+ 
+2.2 搭建服务消费者环境
+ 
+只需要到order-web项目的控制器（OrderController）添加如下处理请求的方法：
+ 
+ 
+2.3 实现轮询策略
+ 
+2.3.1 配置负载均衡策略
+ 
+因为Spring Cloud LoadBalancer默认使用的是轮询策略，所以服务消费者不需要做任何配置
+2.3.2 测试轮询策略
+ 
+先启动nacos注册中心，然后启动三个服务提供者（stock-service）和服务消费者（order-web）
+打开nacos注册中心管理平台，打开服务列表，可以查看到如下结果
+    }
+    
+    。。。。。。。。。。。。。。。
+}
+@RestController
+@RequestMapping("/order")
+public class OrderController {
+    @Autowired
+    private RestTemplate restTemplate;
+    //测试服务消费者调用服务提供者集群
+    @RequestMapping("/test")
+    public String test(){
+        System.out.println("------test-------");
+        String url="http://stock-service/stock/testCluster";
+        //执行远程调用
+        String res=restTemplate.getForObject(url,String.class);
+        System.out.println("res:"+res);
+        return "消费者调用成功，"+res;
+    }
+
+
+
+=== 第 9 页 ===
+
+在浏览器中输入请求地址：http://localhost:8001/order/test，多次刷新页面，查看页面中端口值
+变化，可以看出负载均衡的策略。
+ 
+2.4 实现随机策略
+ 
+2.4.1 配置随机策略
+ 
+在服务消费者的com.baidu.config包中，创建LoadBalancerConfig类，用于配置随机策略，具体
+代码如下：
+注意：该配置类不需要添加@Configuration注解
+ServiceInstance表示服务实例。
+LoadBalancerClientFactory表示负载均衡的客户端工厂，该工厂生产客户端，通过负载均衡
+和客户端生成客户端实例。
+ServiceInstanceListSupplier是一个服务实例列表提供者接口，它的主要作用是根据服务名或其他
+条件来获取可用的服务实例列表。在微服务架构中，服务实例可能会动态地注册和注销，而
+ServiceInstanceListSupplier则负责提供当前可用的服务实例信息。
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.loadbalancer.core.RandomLoadBalancer;
+import org.springframework.cloud.loadbalancer.core.ReactorLoadBalancer;
+import 
+org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
+import 
+org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+public class LoadBalancerConfig {
+    @Bean
+    public ReactorLoadBalancer<ServiceInstance> getBalancer(Environment env,
+
+
+
+=== 第 10 页 ===
+
+ 
+2.4.2 使用随机策略
+ 
+方法一：局部使用，针对指定服务提供者，实现随机策略，只需要在RestTemplateConfig中添加
+如下注解：
+方法二：全局配置：如果需要对所有服务提供者都使用随机策略，则可以在springboot的启动器
+上添加如下注解：
+                                                           
+ LoadBalancerClientFactory factory) {
+        //获取服务提供者的服务名称
+        String name=env.getProperty(factory.PROPERTY_NAME);
+        System.out.println("name-----------"+name);
+        //获取ObjectProvider对象
+        ObjectProvider<ServiceInstanceListSupplier> 
+provider=factory.getLazyProvider(name, ServiceInstanceListSupplier.class);
+        //返回随机策略对象
+        return new RandomLoadBalancer(provider,name);
+    }
+}
+//value配置服务提供者的服务名称，configuration配置负载均衡策略的配置类名称
+@LoadBalancerClient(value = "stock-service", configuration = 
+LoadBalancerConfig.class)
+package com.baidu.config;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+@Configuration
+//value配置服务提供者的服务名称，configuration配置负载均衡策略的配置类名称
+@LoadBalancerClient(value = "stock-service", configuration = 
+LoadBalancerConfig.class)
+public class RestTemplateConfig {
+    @Bean
+    @LoadBalanced
+    public RestTemplate getRestTemplate() {
+        return  new RestTemplate();
+    }
+}
+@LoadBalancerClients(defaultConfiguration = LoadBalancerConfig.class)
+package com.baidu;
+
+
+
+=== 第 11 页 ===
+
+ 
+2.4.3 测试功能
+ 
+先启动nacos注册中心，启动三个服务提供者(stock-service)，启动服务消费者(order-web)，最后
+在浏览器中输入地址：http://localhost:8001/order/test，多次刷新地址栏，查看运行结果，发现
+提供服务的端口是没有规律的。
+2.5 实现权重策略
+ 
+2.5.1 配置服务提供者的权重
+ 
+进入每一个服务提供者(stock-service)，通过在application.yml文件中添加如下配置，从而设置权
+重，权重取值范围是1--100之间。
+例如配置stock-service项目权重，application.yml文件的完整代码如下：
+import com.baidu.config.LoadBalancerConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import 
+org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
+@SpringBootApplication
+@LoadBalancerClients(defaultConfiguration = LoadBalancerConfig.class)
+public class OrderWebApplication8001 {
+    public static void main(String[] args) {
+        SpringApplication.run(OrderWebApplication8001.class, args);
+    }
+}
+spring:
+  cloud:
+    nacos:
+      discovery:
+        weight: 50
+
+
+
+=== 第 12 页 ===
+
+配置完成以后，进入nacos的服务列表，点击详情，查看结果如下：
+ 
+ 
+2.5.2 配置权重策略
+ 
+在服务消费者的com.baidu.config包中，创建NacosLoadBalancerConfig类，用于配置权重策
+略，具体代码如下：
+注意：该配置类不需要添加@Configuration注解
+注意：这里需要注入NacosDiscoveryProperties对象，在创建NacosLoadBalancer对象时会
+用到相关的配置信息。
+server:
+  port: 9001
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        weight: 1
+package com.baidu.config;
+import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
+import com.alibaba.cloud.nacos.loadbalancer.NacosLoadBalancer;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.loadbalancer.core.ReactorLoadBalancer;
+import 
+org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
+import 
+org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+public class NacosLoadBalancerConfig {
+
+
+
+=== 第 13 页 ===
+
+ 
+2.5.3 使用权重策略
+ 
+方法一：局部使用，针对指定服务提供者，实现权重策略，只需要在RestTemplateConfig中进行
+如下配置：
+方法二：全局配置：如果需要对所有服务提供者都使用权重策略，则可以在springboot的启动器
+上进行如下配置：
+    @Resource //这里只能用@Resource注入，不能用@Autowired注入
+    private NacosDiscoveryProperties nacosDiscoveryProperties;
+    @Bean
+    public ReactorLoadBalancer<ServiceInstance> getBalancer(Environment env,
+                                                           
+ LoadBalancerClientFactory factory){
+        System.out.println("nacosDiscoveryProperties--------
+"+nacosDiscoveryProperties);
+        //获取付提供者的服务名称
+        String name=env.getProperty(factory.PROPERTY_NAME);
+        //获取ObjectProvider对象
+        ObjectProvider<ServiceInstanceListSupplier> provider = 
+factory.getLazyProvider(name,ServiceInstanceListSupplier.class);
+        //返回NacosLoadBalancer对象
+        return new NacosLoadBalancer(provider,name, 
+nacosDiscoveryProperties);
+    }
+}
+package com.baidu.config;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+@Configuration
+//value配置服务提供者的服务名称，configuration配置负载均衡策略的配置类名称
+@LoadBalancerClient(value = "stock-service", configuration = 
+NacosLoadBalancerConfig.class)
+public class RestTemplateConfig {
+    @Bean
+    @LoadBalanced
+    public RestTemplate getRestTemplate() {
+        return  new RestTemplate();
+    }
+}
+package com.baidu;
+
+
+
+=== 第 14 页 ===
+
+ 
+2.5.4 测试权重策略：
+ 
+先启动nacos注册中心，启动三个服务提供者(stock-service)，启动服务消费者(order-web)，最后
+在浏览器中输入地址：http://localhost:8001/order/test，多次刷新地址栏，查看运行结果，发现
+提供服务的端口是9003出现的次数最多，9001端口出现次数最少。
+import com.baidu.config.LoadBalancerConfig;
+import com.baidu.config.NacosLoadBalancerConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
+import 
+org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
+@SpringBootApplication
+@LoadBalancerClients(defaultConfiguration = NacosLoadBalancerConfig.class)
+public class OrderWebApplication8001 {
+    public static void main(String[] args) {
+        SpringApplication.run(OrderWebApplication8001.class, args);
+    }
+}
+
+
+
+
+=== 微服务阿里巴巴课程04：feign用法.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴课程04：feign用法
+ 
+一、feign的用法
+ 
+1.1、feign基本概念
+ 
+什么是feign:
+feign是netflix开发的声明式、模板化的http客户端。feign可以帮助我们更便捷、优雅的调用
+HTTP API.
+feign支持多种注解，例如feign自带的注解或者JAX-RS注解等（在spring cloud alibaba中，
+我们统统都不用了）。
+feign是使用在消费端的，当然提供端也可能是消费端。（调用方是消费端，被调用方是提供
+端）
+spring cloud openfeign对feign进行了增强，使其支持springmvc注解，另外还整合了
+LoadBalancer和Nacos，从而使feign的使用更加方便
+我们实际上用的是OpenFeign。
+ 
+1.2、项目整合OpenFeign
+ 
+1.2.1、创建项目
+ 
+创建一个不带任何模板的maven项目(openfeign-web)，该项目继承springcloud-parent。
+创建步骤这里就不写了，大家也应该很熟悉了。
+1.2.2、配置pom.xml
+ 
+和其他的消费者一样配置相关依赖，注意：我们这里需要添加上openfeign的依赖。
+我们在公共模块中已经添加了openfeign依赖，所以当前项目只需要引入公共模块的依赖就
+可以了。
+<!--支持openfeign的依赖-->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+
+
+=== 第 2 页 ===
+
+ 
+1.2.3、编写配置文件
+ 
+在template目录下创建bootstrap.yml文件，并进行如下配置：
+ 
+1.2.4、创建启动器
+ 
+在main/java目录下创建com.baidu包，然后在该下创建启动器OpenFeignApplication8002
+需要添加使openfeign生效的注解@EnableFeignClients
+    <artifactId>openfeign-web</artifactId>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+   <dependencies>
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <!--排除mybatis-plus的依赖-->
+            <exclusions>
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>mybatis-plus-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>
+server:
+  port: 8002
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: openfeign-web
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+=== 第 3 页 ===
+
+ 
+1.2.5 创建feign接口
+ 
+在com.baidu包下创建feign包，在该包中创建接口StockFeignService（接口名称需要和提供者控
+制器的首单词名称相同）。
+接口中方法的写法很简单：就是提供者控制器中处理请求的方法，保留所有注解，方法名，
+参数等，只要去掉方法体即可。
+feign接口不需要写实现类，具体实现是框架通过动态代理实现的。
+@FeignClient(value="stock-service",path = "/stock")
+该注解用于标注该接口是feign的客户端，value取值就是服务提供者注册的服务名称。
+如果服务提供者控制器头部有总体匹配的注解，则需要配置path指定对应的请求名称，
+如果提供者没有总体匹配，则不需要添加path。
+注意：如果需要使用restfull风格发送参数给服务提供者，则无论变量名与｛变量名｝
+是否同名，在@PathVariable中必须指定名称。例如：
+getById(@PathVariable("id") Integer id)，否则会出现如下异常：
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+@SpringBootApplication
+@EnableFeignClients
+public class OpenFeignApplication8002 {
+    public static void main(String[] args) {
+        SpringApplication.run(OpenFeignApplication8002.class,args);
+    }
+}
+Caused by: java.lang.IllegalStateException: PathVariable annotation 
+was empty on param 0.
+package com.baidu.feign;
+import com.baidu.pojo.Stock;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+@FeignClient(value = "stock-service",path = "/stock")
+public interface StockFeignService {
+    @RequestMapping("/testCluster")
+    public String testCluster();
+    //查询所有库存库存信息
+    @RequestMapping("/getAll")
+    public List<Stock> getAll();
+
+
+
+=== 第 4 页 ===
+
+ 
+1.2.6、创建控制器
+ 
+在com.baidu包下创建controller包，并在该包下创建OrderFeignController类作为控制器。
+在控制器中自动注入feign的接口，在处理匹配请求的方法中调用feign接口的方法，实现调用
+提供者。
+    //根据id查询指定的库存信息
+    @RequestMapping("/getStockById/{id}")
+    public Stock getStockById(@PathVariable("id") Integer id);
+    //根据id修改指定商品的库存信息
+    @PostMapping("/updateStockById")
+    public boolean updateStockById(@RequestBody Stock stock);
+}
+package com.baidu.controller;
+import com.baidu.feign.StockFeignService;
+import com.baidu.pojo.Stock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+@RestController
+@RequestMapping("/feign")
+public class OrderFeignController {
+    @Autowired
+    private StockFeignService feignService;
+    //测服务消费者调用服务提供者集群,测试负载均衡策略
+    @RequestMapping("/test")
+    public String test(){
+        System.out.println("------test-------");
+        //执行远程调用
+        String res=feignService.testCluster();
+        return "消费者调用成功，"+res;
+    }
+    //添加订单
+    @RequestMapping("/addOrder")
+    public String addOrder(){
+        System.out.println("-------addOrder------");
+        //远程调用，查询所有库存信息
+        List<Stock> list=feignService.getAll();
+        return "添加订单成功，所有库存信息是："+list;
+    }
+
+
+
+=== 第 5 页 ===
+
+ 
+1.2.7、测试功能
+ 
+首先启动nacos注册中心，然后启动三个提供者，最后启动消费者（openfeign-web），在浏览器
+中输入请求，查看运行结果，多次刷新，查看结果，发现openfeign默认使用的也是轮询策略。
+测试根据id查询指定商品库存，用于测试restfull风格进行远程调用。
+二、2022feign实现负载均衡
+ 
+feign其实不是做负载均衡的，负载均衡是LoadBalancer的功能，feign只是集成了LoadBalancer
+而已，但是负载均衡的功能还是feign内置的LoadBalancer在做，而不是feign。
+feign的作用替代了RestTemplate，性能比较低，但是可以使代码可读性很强。
+在没有配置负载均衡的情况下，feign默认使用的是轮询策略。
+ 
+    //下订单时，根据id查询指定的库存信息
+    @RequestMapping("/getOrderByStockId")
+    public String getOrderByStockId(Integer stockId){ //这里的id表示的是商品库存主键
+        System.out.println("------getOrderByStockId-------");
+        System.out.println("stockId:"+stockId);
+        //远程调用，实现根据id查询指定的库存信息
+        Stock stock=feignService.getStockById(stockId);
+        return "查询订单成功，库存是："+stock;
+    }
+    //修改订单，修改商品库存信息
+    @RequestMapping("upateOrderById")
+    public String upateOrderById(){
+        System.out.println("-----upateOrderById-------");
+        //创建一个Stock对象，表示需要修改的库存
+        Stock stock=new Stock(1,null,8);
+        //远程调用，执行修改商品库存信息
+        boolean flag=feignService.updateStockById(stock);
+        return "修改订单结果由flag决定，flag="+flag;
+    }
+}
+
+
+
+=== 第 6 页 ===
+
+2.1 配置权重策略
+ 
+与之前实现权重策略一样，在消费者(openfeign-web)中创建com.baidu.config包，并在该包下配
+置权重策略的配置类。
+ 
+2.2 修改启动器
+ 
+修改openfeign-web项目的启动器，添加负载均衡策略的注解，具体代码如下：
+package com.baidu.config;
+import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
+import com.alibaba.cloud.nacos.loadbalancer.NacosLoadBalancer;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.loadbalancer.core.ReactorLoadBalancer;
+import 
+org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
+import 
+org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+public class NacosLoadBalancerConfig {
+    @Resource //这里只能用@Resource注入，不能用@Autowired注入
+    private NacosDiscoveryProperties nacosDiscoveryProperties;
+    @Bean
+    public ReactorLoadBalancer<ServiceInstance> getBalancer(Environment env,
+                                                           
+ LoadBalancerClientFactory factory){
+        System.out.println("nacosDiscoveryProperties--------
+"+nacosDiscoveryProperties);
+        //获取付提供者的服务名称
+        String name=env.getProperty(factory.PROPERTY_NAME);
+        //获取ObjectProvider对象
+        ObjectProvider<ServiceInstanceListSupplier> provider = 
+factory.getLazyProvider(name,ServiceInstanceListSupplier.class);
+        //返回NacosLoadBalancer对象
+        return new NacosLoadBalancer(provider,name, 
+nacosDiscoveryProperties);
+    }
+}
+package com.baidu;
+import com.baidu.config.NacosLoadBalancerConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+
+
+=== 第 7 页 ===
+
+ 
+2.3 测试功能
+ 
+重启openfeign-web项目，在浏览器中输入：http://localhost:8002/feign/test，多次刷新该地
+址，发现9003被访问的次数最多，9001被访问的次数最少。
+import 
+org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+@SpringBootApplication
+@EnableFeignClients
+@LoadBalancerClients(defaultConfiguration = NacosLoadBalancerConfig.class)
+public class OpenFeignApplication8002 {
+    public static void main(String[] args) {
+        SpringApplication.run(OpenFeignApplication8002.class,args);
+    }
+}
+
+
+
+
+=== 微服务阿里巴巴课程05：nacos-config配置中心.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴05：nacos-config配置中心 
+一、nacos-config配置中心
+ 
+1.1、配置中心基本介绍
+ 
+官方文档：https://github.com/alibaba/spring-cloud-alibaba/wiki/Nacos-config
+nacos以键值对的方式，提供用于存储配置和其他元数据存储。为分布式系统中的外部化配置提供
+服务器端和客户端支持，使用spring cloud alibaba naocs config可以在nacos server集中管理你
+应用的外部属性配置。
+1.1.1、微服务配置文件问题
+ 
+配置文件相对分散。在一个微服务架构下，配置文件会随着微服务的增多变的越来越多，而且分散
+在各个微服务中，不好统一配置和管理。
+配置文件无法区分环境。微服务项目可能会有多个环境，例如：测试环境、预发布环境、生产环
+境。每一个环境所使用的配置理论上都是不同的，一旦需要修改，就需要我们去各个微服务下手动
+维护，这比较困难。
+配置文件无法实时更新。我们修改了配置文件之后，必须重新启动微服务才能使配置生效，这对一
+个正在运行的项目来说是非常不友好的。
+1.1.2、配置中心解决思路
+ 
+首先把项目中各种经常变动的配置全部都放到配置中心进行统一管理，并提供一套标准的接口。
+当各个服务需要获取配置的时候，就来配置中心的接口拉取自己的配置。
+当配置中心中的各种参数有更新的时候，也能通知到各个服务实时过来同步最新的信息，使之动态
+更新。
+1.1.3、配置中心架构图
+ 
+ 
+二、配置管理图形界面
+ 
+启动nacos注册中心，进入浏览器，查看管理服务
+
+
+
+=== 第 2 页 ===
+
+ 
+2.1、基本配置文件管理
+ 
+2.1.1、配置管理前置安装
+ 
+在进行配置文件管理时，因为nacos默认使用的是自带的基于内存模式的Derby数据库，在这里我
+们需要调整成我们自己的mysql数据库，具体只需要到nacos的conf目录中，配置
+application.properties文件即可。
+注意：需要先将nacos_config数据库创建好，否则在启动nacos时会报错。
+在target目录下需要添加上mysql的驱动包（mysql-connector-java-8.0.27.jar），否则浏览
+器中开不开管理页面。
+创建数据库表的代码在conf目录下的mysql-schema.sql文件中已经给出了（总共应该有12张
+表）。
+#*************** Config Module Related Configurations ***************#
+### If use MySQL as datasource:
+spring.datasource.platform=mysql
+### Count of DB:
+db.num=1
+### Connect URL of DB:
+db.url.0=jdbc:mysql://127.0.0.1:3306/nacos_config?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true&useUnicode=true&useSSL=false&serverTimezone=UTC
+db.user.0=root
+db.password.0=xiaoye
+ create database nacos_config;
+  use nacos_config;
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info   */
+/******************************************/
+CREATE TABLE `config_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+
+
+
+=== 第 3 页 ===
+
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) DEFAULT NULL,
+  `content` longtext NOT NULL COMMENT 'content',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `c_desc` varchar(256) DEFAULT NULL,
+  `c_use` varchar(64) DEFAULT NULL,
+  `effect` varchar(64) DEFAULT NULL,
+  `type` varchar(64) DEFAULT NULL,
+  `c_schema` text,
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfo_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='config_info';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_aggr   */
+/******************************************/
+CREATE TABLE `config_info_aggr` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `datum_id` varchar(255) NOT NULL COMMENT 'datum_id',
+  `content` longtext NOT NULL COMMENT '内容',
+  `gmt_modified` datetime NOT NULL COMMENT '修改时间',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfoaggr_datagrouptenantdatum` 
+(`data_id`,`group_id`,`tenant_id`,`datum_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='增加租户字段';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_beta   */
+/******************************************/
+CREATE TABLE `config_info_beta` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+  `beta_ips` varchar(1024) DEFAULT NULL COMMENT 'betaIps',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+
+
+
+=== 第 4 页 ===
+
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfobeta_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_beta';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_tag   */
+/******************************************/
+CREATE TABLE `config_info_tag` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `tag_id` varchar(128) NOT NULL COMMENT 'tag_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfotag_datagrouptenanttag` 
+(`data_id`,`group_id`,`tenant_id`,`tag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_tag';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_tags_relation   */
+/******************************************/
+CREATE TABLE `config_tags_relation` (
+  `id` bigint(20) NOT NULL COMMENT 'id',
+  `tag_name` varchar(128) NOT NULL COMMENT 'tag_name',
+  `tag_type` varchar(64) DEFAULT NULL COMMENT 'tag_type',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `nid` bigint(20) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`nid`),
+  UNIQUE KEY `uk_configtagrelation_configidtag` 
+(`id`,`tag_name`,`tag_type`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_tag_relation';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = group_capacity   */
+/******************************************/
+
+
+
+=== 第 5 页 ===
+
+CREATE TABLE `group_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `group_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Group ID，空字符表示整
+个集群',
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数，，0表示使用默认值',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_group_id` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='集群、各Group
+容量信息表';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = his_config_info   */
+/******************************************/
+CREATE TABLE `his_config_info` (
+  `id` bigint(20) unsigned NOT NULL,
+  `nid` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `data_id` varchar(255) NOT NULL,
+  `group_id` varchar(128) NOT NULL,
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL,
+  `md5` varchar(32) DEFAULT NULL,
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `src_user` text,
+  `src_ip` varchar(50) DEFAULT NULL,
+  `op_type` char(10) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`nid`),
+  KEY `idx_gmt_create` (`gmt_create`),
+  KEY `idx_gmt_modified` (`gmt_modified`),
+  KEY `idx_did` (`data_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='多租户改造';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = tenant_capacity   */
+/******************************************/
+CREATE TABLE `tenant_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Tenant ID',
+
+
+
+=== 第 6 页 ===
+
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='租户容量信息
+表';
+CREATE TABLE `tenant_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `kp` varchar(128) NOT NULL COMMENT 'kp',
+  `tenant_id` varchar(128) default '' COMMENT 'tenant_id',
+  `tenant_name` varchar(128) default '' COMMENT 'tenant_name',
+  `tenant_desc` varchar(256) DEFAULT NULL COMMENT 'tenant_desc',
+  `create_source` varchar(32) DEFAULT NULL COMMENT 'create_source',
+  `gmt_create` bigint(20) NOT NULL COMMENT '创建时间',
+  `gmt_modified` bigint(20) NOT NULL COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_info_kptenantid` (`kp`,`tenant_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='tenant_info';
+CREATE TABLE `users` (
+    `username` varchar(50) NOT NULL PRIMARY KEY,
+    `password` varchar(500) NOT NULL,
+    `enabled` boolean NOT NULL
+);
+CREATE TABLE `roles` (
+    `username` varchar(50) NOT NULL,
+    `role` varchar(50) NOT NULL,
+    UNIQUE INDEX `idx_user_role` (`username` ASC, `role` ASC) USING BTREE
+);
+CREATE TABLE `permissions` (
+    `role` varchar(50) NOT NULL,
+    `resource` varchar(255) NOT NULL,
+    `action` varchar(8) NOT NULL,
+    UNIQUE INDEX `uk_role_permission` (`role`,`resource`,`action`) USING 
+BTREE
+);
+INSERT INTO users (username, password, enabled) VALUES ('nacos', 
+'$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
+
+
+
+=== 第 7 页 ===
+
+ 
+安装完成以后就可以启动nacos，在浏览器中输入http://localhost:8848/naocs/index.html请求，
+进入管理界面
+ 
+2.1.2、创建命名空间
+ 
+进入命名空间选项，选择新建命名空间，进行如下配置，注意：命名空间ID不填写时则自动生
+成。
+在创建命名空间时，一般会根据环境创建命名空间，例如dev，prod，test等。
+创建完成以后可以在主界面看到新建的命名空间。
+创建的命名空间会保存到 tenant_info表中。
+2.1.3、创建配置信息
+ 
+点击配置列表右边的加号，进入如下页面添加配置信息，配置完成以后点击下面的发布就完成了。
+Data Id：用于区分不同项目，不同开发模式的配置，可以用点进行分隔表示。
+INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+
+
+
+=== 第 8 页 ===
+
+注意：在springcloud2022版本中，配置Data Id时不能带文件类型的后缀（例
+如.yml，.properties）。
+group：可以针对不同的分组进行配置，默认是DEFAULT_GROUP
+描述：最好真实填写该配置的开发环境以及配置用途，方便以后提醒
+配置格式：我们一般使用常用的yaml格式或者properties格式。然后在黑色区域按照格式填
+写配置
+发布以后可以返回到主界面的配置列表中查看到刚才的配置。
+ 
+这里的配置信息会保存到数据库的config_info表中。
+2.1.4、信息回滚
+ 
+可以进入更多-->历史记录，查看以前填写的配置信息，可以将配置信息回滚到从前的配置。
+
+
+
+=== 第 9 页 ===
+
+如果当前操作的是第一个版本，则回滚时会删除这个版本。
+ 
+信息回滚的记录会保存到 his_config_info表中。
+ 
+2.2、权限控制
+ 
+2.2.1、开启权限控制
+ 
+要想让权限控制生效，需要到conf/application.properties文件中进行如下配置：
+修改以后最好重新启动nacos
+ 
+ 
+### If turn on auth system:
+nacos.core.auth.enabled=true
+nacos.core.auth.server.identity.key=example
+nacos.core.auth.server.identity.value=example
+nacos.core.auth.plugin.nacos.token.secret.key=bmFjb3NfMjAyNDAxMTBfc2hpZ3poX2
+5hY29zX3Rva2Vu
+
+
+
+=== 第 10 页 ===
+
+2.2.2、创建用户
+ 
+进入权限控制-->创建用户，就可以创建用户了。
+注意：在创建用户时，有时候可能需要先退出nacos用户，然后重新登录。
+创建的用户信息会保存在users表中
+ 
+2.2.3、绑定角色
+ 
+
+
+
+=== 第 11 页 ===
+
+选择角色管理-->绑定角色，然后输入角色名称和需要绑定的用户名称就可以了。其实这也是在创
+建角色。
+创建好角色以后会保存到roles表中。
+ 
+2.2.4、角色授权
+ 
+在给用户绑定角色以后，可以给角色授权，在权限管理中，我们可以选择该角色操作的命名空间，
+动作也可以选择读写性。
+
+
+
+=== 第 12 页 ===
+
+授权完成以后，信息会保存到permissions表中。这里只是授予了public空间的读写权限，所以
+xiaoye用户无法访问prod和dev空间
+ 
+ 
+三、读取配置信息
+ 
+要使用配置信息的前提条件是必须先启动nacos，否则不管怎么配置都没有意义。
+3.1、快速使用配置信息
+ 
+3.1.1、创建配置信息
+ 
+这里配置一组信息，具体信息如下：
+这组配置信息的data id为：com.baidu.config-nacos.dev，注意：不要带文件类型的后缀
+所属分组(group)为：dev，注意：这里的命名空间是dev,分组也是dev,其实分组也可以使用
+默认（DEFULT_GROUP）
+所属命名空间为dev，命名空间id为：a0cf8c69-c46e-4be8-9207-c1eef42029c9
+具体配置内容如下，文件的配置格式为yaml
+server:
+  port: 7777
+name: xiaoye  
+
+
+
+=== 第 13 页 ===
+
+ 
+ 
+3.1.2、创建项目config-nacos
+ 
+创建一个不带任何模板的maven项目，此项目需要继承springcloud-parent
+3.1.3、引入依赖
+ 
+如果要使用nacos的配置，则在需要使用的项目中添加如下依赖：
+pom.xml文件的完整配置信息
+因为我们在common-api项目中已经将上面的依赖进行配置了，所以只需要引入公共模块的
+依赖即可。
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+</dependency>
+
+
+
+=== 第 14 页 ===
+
+ 
+3.1.4、修改配置文件
+ 
+在resources文件夹下创建配置文件bootstrap.yml，这个配置是核心，凡是需要灵活改动的配
+置，保存到配置中心，通过bootstrap.yml文件读取配置信息。
+springcloud加载的时候，先加载 bootstrap.yml，后加载application.yml
+如果愿意的话：可以把application.yml中的配置写到配置中心，也可以把mybatis.xml配置
+写到配置中心，另外还有一些容易变更的属性资源配置也可以写到配置中心（也可以都写到
+bootstrap.yml文件）。
+总结：经常变化的配置写到配置中心，不变的配置写到application.yml中，最好将nacos的
+相关配置都保存到 bootstrap.yml文件中。
+3.1.4.1、修改application.yml
+ 
+创建application.yml文件，并进行如下配置
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>config-nacos</artifactId>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <!--引入公共模块-->
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <!--排除依赖-->
+            <exclusions>
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>mybatis-plus-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>
+server:
+  port: 8003
+
+
+
+=== 第 15 页 ===
+
+3.1.4.2、编辑bootstrap.yml
+ 
+创建bootstrap.yml文件，并进行如下配置
+项目读取配置中心的配置信息时，需要注意这四步的设置：1.命名空间id，2.DataId 的设置，
+3.Group的设置，4.文件后缀默认perperties，可以改为yml。
+spring.cloud.nacos.config.server-addr：表示保存配置文件所在的主机和端口地址
+spring.cloud.nacos.config.namespace=命名空间id，用于指定命名空间 。
+spring.application.name=DataId，注意spring.application.name和data id一定要一致。
+spring.cloud.nacos.config.group：配置分组名称，默认是DEFAULT_GROUP
+spring.cloud.nacos.config.file-extension：用于配置文件的类型，支持yaml和properties格
+式。默认是properties。
+spring.cloud.nacos.config.refresh-enabled=false 表示是否开启配置的自动刷新，默认为true表
+示开启自动刷新。
+配置当前登录nacos的用户名和密码：
+spring.cloud.nacos.username=nacos表示配置当前登录的用户名，默认就是nacos
+spring.cloud.nacos.passoword=nacos表示配置当前登录的密码，默认就是nacos
+如果设置了鉴权：nacos.core.auth.enabled=true，则需要配置上用户名和密码，如果没有
+配置鉴权，则不用配置。
+3.1.5、创建启动器
+ 
+创建com.baidu包，在该包下创建springboot的启动类
+spring:
+  cloud:
+    nacos:
+      config:
+        #指定配置中心的位置
+        server-addr: 127.0.0.1:8848
+        #配置命名空间的id
+        namespace: a1706c19-ed58-4336-ae26-538c471f4708
+        #配置分组
+        group: dev
+        #配置文件类型
+        file-extension: yml
+      #配置当前登录的用户名和密码
+      username: nacos
+      password: nacos
+  #配置DataId
+  application:
+    name: com.baidu.config-nacos.dev
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class ConfigNacosApplication8003 {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigNacosApplication8003.class, args);
+    }
+}
+
+
+
+=== 第 16 页 ===
+
+测试启动项目，查看端口是否生效
+3.1.6、创建控制器
+ 
+创建com.baidu.controller包，在该包下创建控制器TestController，用于测试配置在
+com.baidu.config-nacos.dev.yaml文件中的服务端口是否生效
+ 
+3.1.7、测试
+ 
+启动springboot，查看控制台显示 效果：
+从结果可以看出配置在application.yml文件中的端口，在启动服务器时没有生效，使用的是
+bootstrap.yml文件中的端口，这可以说明bootstrap.yml文件的优先级高于application.yml
+文件。
+package com.baidu.controller;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/configNacos")
+public class TestController {
+    @Value("${server.port}")
+    private Integer port;
+    @Value("${name}")
+    private String name;
+    @RequestMapping("/test")
+    public String test() {
+        System.out.println("端口是："+port);
+        System.out.println("用户名是："+name);
+        return "port:" + port + ",name:" + name;
+    }
+}
+
+
+
+=== 第 17 页 ===
+
+在浏览器中输入http://localhost:7777/configNacos/test请求，可以查看到请求的数据，说
+明配置在com.baidu.config-nacos.dev.yaml文件中的端口信息生效了。
+查看控制台结果，发现已经读取到了对应的值。
+ 
+3.2、配置服务名称
+ 
+在实际应用过程中，服务名称很可能和DataId名称不同，此时需要手动指定DataId和服务名称。
+spring.application.name用于配置DataId
+spring.cloud.nacos.discovery.service用于配置服务名称
+3.2.1、实现配置
+ 
+配置bootstrap.yml文件。代码如下：
+#指明配置中心所在位置
+spring:
+  cloud:
+    nacos:
+      config:
+        server-addr: 127.0.0.1:8848
+        #配置命名空间Id
+        namespace: 2af5f326-8ae1-43d8-85e1-1ae20850cabb
+        #配置分组
+        group: dev
+        #配置文件后缀
+        file-extension: yml
+      #配置登录nacos的账号密码
+
+
+
+=== 第 18 页 ===
+
+3.2.2、测试配置
+ 
+启动config-nacos项目，查看控制台输出结果，发现已经读取到了对应的yml文件。
+打开nacos的管理平台，查看服务列表，发现服务名称是nacos-config，并不是我们配置的
+spring.application.name的名称。
+ 
+ 
+3.3、配置文件的动态更新
+ 
+如果将spring.cloud.nacos.config.refresh-enabled=true，则当修改配置文件的内容，控制台中
+的值也会自动跟着更新，这其实也是nacos的一大优点，系统默认配置的值就是true，如果需要动
+态更新的时候，我们可以不做任何配置。
+只有在控制器头部加上@RefreshScope注解，这样的情况下，在控制器中通过@Value的方式才能
+正常读取到修改之后的值。
+3.3.1、实现配置
+ 
+修改bootstrap.yml文件，将自动更新的配置添加进去，代码如下：
+      username: nacos
+      password: nacos
+      #配置服务发现的地址
+      discovery:
+        server-addr: 127.0.0.1:8848
+        #配置服务名称
+        service: config-nacos
+  #配置DataId
+  application:
+    name: com.baidu.config-nacos.dev
+
+
+
+=== 第 19 页 ===
+
+将spring.cloud.nacos.config.refresh-enabled取值从之前的false，修改成true。
+ 
+3.3.2、修改控制器
+ 
+在控制器的头部加上@RefreshScope注解
+ 
+spring:
+  application:
+    name: com.baidu.config-nacos.dev
+  cloud:
+    nacos:
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: 80e856aa-f147-4a97-a2f1-e8ffa2fe1bbe
+        group: dev
+        file-extension: yml
+        # false为关闭自动刷新,默认是true
+        refresh-enabled: true
+      password: nacos
+      username: nacos
+      discovery:
+        server-addr: 127.0.0.1:8848
+        service: config-nacos
+package com.baidu.controller;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RefreshScope
+@RequestMapping("/configNacos")
+public class TestController {
+    @Value("${server.port}")
+    private Integer port;
+    @Value("${name}")
+    private String name;
+    @RequestMapping("/test")
+    public String test() {
+        System.out.println("端口是："+port);
+        System.out.println("用户名是："+name);
+        return "port:" + port + ",name:" + name;
+    }
+}
+
+
+
+=== 第 20 页 ===
+
+3.3.3、测试
+ 
+启动项目前，先查看nacos管理平台上的配置信息
+启动config-nacos项目，在浏览器中输入http://localhost:7777/configNacos/test请求，查看页面
+显示效果
+在不需要重新启动服务器的情况下，进入nacos配置中心，修改配置端口号，然后点击下方的发
+布。然后是确认发布。
+
+
+
+=== 第 21 页 ===
+
+修改完成以后，刷新浏览器中输入http://localhost:7777/configNacos/test请求，发现请求失败，
+但是通过http://localhost:8888/configNacos/test请求，可以发现请求成功了。而且修改后的数据
+也读取到了。
+有时候通过http://localhost:7777/configNacos/test请求可以访问成功，而http://localhost:
+8888/configNacos/test请求却是失败的，但是页面中的数据一定是变成了修改后的结果，出
+现这种情况，应该算是nacos的一个小BUG。
+
+
+
+
+=== 微服务阿里巴巴课程06：sentinel应用一.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴课程06：sentinel应用一
+ 
+一、sentinel的相关概念
+ 
+1,1、分布式遇到的问题
+ 
+当服务挂掉的时候，我们首先要想到的原因：
+激增流量打垮
+被其他服务打垮
+异常没处理
+分布式遇到的问题：
+１、缓存击穿
+２、单点故障
+３、缺乏依赖隔离
+４、流量激增
+ 5、负载不均衡
+6、缺乏容错机制
+ 
+1.1.1、服务雪崩：
+ 
+服务雪崩的概念简单的理解为，一条服务链A（用户服务）、B（订单服务）、C（支付服务）三个
+服务，分别是A调用B，B调用C。
+一般而言任务量最大的是底层服务C。
+服务C如果挂了（宕机）导致B服务间接也不可用、B服务不可用又间接导致A不可用。这样这条服
+务链A->B->C也就全部挂了，就像雪崩一样，因为一个服务不可用导致全部服务不可用。因此这种
+现象就是服务雪崩。
+ 
+1.1.2、容错机制：
+ 
+当服务提供者无法正常为消费者提供服务时 ，如请求超时、后台服务无响应、后台服务异常等， 
+通过容错机制直接返回统一处理结果，并对下次请求进行同样处理，直到后台服务功能正常。
+
+
+
+=== 第 2 页 ===
+
+ 
+1.2、常见的容错机制
+ 
+1.2.1、超时机制
+ 
+在不做任何处理的情况下，服务提供者不可用会导致消费者请求线程强制等待，从而造成系统资源
+耗尽。加入超时机制以后，一旦超时，就释放资源，由于释放资源速度较块，一定程度上可以抑制
+资源耗尽的问题。
+1.2.2、服务限流（资源隔离）
+ 
+防止爆发式流量直接压到后台服务实例，造成资源耗尽、甚至应用崩溃
+控制访问流量，通过指定的策略消减流量（如网络层面限制访问流量、后服务实例使用技术
+手段限制并发数量等），使得落到后台服务实例的请求在能承受的范围内。
+nginx，消息中间件都可以实现服务限流。QPS代表每秒钟的请求数量。
+1.2.3、服务熔断
+ 
+本质上说,熔断器是一个快速失败的机制，当调用出现问题的时候，立马结束调用，熔断器就像保
+险丝一样。
+当多次错误发生的时候，就认为这个服务不可用，熔断器有一个检测的功能，当服务不可用时，则
+打开熔断器，进入快速失败，当发现微服务可用，就关闭熔断器进入正常的微服务的调用。
+1.2.4、服务降级
+ 
+有服务熔断，则必然要有服务降级，当发生熔断的以后，服务将不再被调用，此时客户端自己会准
+备一个本地的服务（fallback）,然后去执行本地的服务（降级服务）。
+当访问量剧增、服务出现问题（如响应时间慢或不响应）或非核心服务影响到核心流程的性能时，
+仍然需要保证服务还是可用的，即使是有损服务。
+
+
+
+=== 第 3 页 ===
+
+ 
+1.3、sentinel:分布式系统的流量防卫兵
+ 
+1.3.1、sentinel是什么
+ 
+Sentinel 是面向分布式服务架构的轻量级流量控制产品，主要以流量为切入点，从流量控制、流
+量整形，熔断降级、系统负载保护等多个维度来帮助您保护服务的稳定性。
+1.3.2、sentinel与hystrix对比
+ 
+
+
+
+=== 第 4 页 ===
+
+ 
+ 
+二、使用sentinel
+ 
+sentinel官网：https://sentinelguard.io/zh-cn/docs/quick-start.html
+Sentinel 的使用可以分为两个部分:
+核心库（Java 客户端）：不依赖任何框架/库，能够运行于 Java 8 及以上的版本的运行时环
+境，同时对 Dubbo / Spring Cloud 等框架也有较好的支持（见 主流框架适配）。但是结合
+控制台可以获得最好的效果。
+控制台（Dashboard）：Dashboard 主要负责管理推送规则、监控、管理机器信息等。这种
+方式是目前用的最多的方式。
+下载地址：https://github.com/alibaba/Sentinel/releases
+2.1、核心库方式使用
+ 
+通过sentinel的核心库方式，实现流控规则（了解即可），下面是流控规则的几个重要属性：
+2.1.1、创建项目
+ 
+创建一个不带任何木板的maven项目（sentinel-demo），该项目可以不用继承springcloud-
+parent，因为sentinel不依赖任何框架和库。但是保存位置还是放在父项目下。
+
+
+
+=== 第 5 页 ===
+
+ 
+在maven project中查看项目的目录结构：
+2.1.2、修改pom文件
+ 
+注意引入sentinel的依赖库
+与springboot3.0.2、spring cloud alibaba 2022.0.0.0-RC2对应的sentinel版本是1.8.6
+<dependencies>
+    <!--配置sentinel的核心库-->
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-core</artifactId>
+        <version>1.8.6</version>
+    </dependency>
+    <!--如果要使用@SentinelResourcce注解，则需要引入的依赖-->
+
+
+
+=== 第 6 页 ===
+
+ 
+2.1.3、创建全局配置文件
+ 
+在resources目录下创建全局配置文件（application.yml），代码如下：
+ 
+2.1.4、配置启动器
+ 
+创建com.baidu包，在该包下创建springboot的启动器，代码如下：
+2.1.5、实现功能
+ 
+2.1.5.1、配置规则
+ 
+创建com.baidu.config包，在该包下创建一个 用于配置流控规则的配置类（FlowRuleConfig），
+代码如下：
+@PostConstruct的作用：该注解用于标记一个方法，它在对象创建完成且依赖注入（DI）完
+成后会自动执行。在这个方法中可以进行各种初始化的操作。
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-annotation-aspectj</artifactId>
+        <version>1.8.6</version>
+    </dependency>
+    <!--配置lombok-->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.20</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+        <version>3.0.2</version>
+    </dependency>
+</dependencies>
+server:
+  port: 8004
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class SentinelApplication8004 {
+    public static void main(String[] args) {
+        SpringApplication.run(SentinelApplication8004.class, args);
+    }
+}
+
+
+
+=== 第 7 页 ===
+
+FlowRule：该类表示流控规则类，通过配置该类的方法的值，从而实现配置流控规则。
+ 
+2.1.5.2、创建控制器
+ 
+创建com.baidu.controller包，在该包下创建SentinelController类，用于充当控制器。
+package com.baidu.config;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Configuration;
+import java.util.ArrayList;
+import java.util.List;
+@Configuration
+public class FlowRuleConfig {
+    @PostConstruct
+    public void initFlowRules(){
+        //创建表示流控规则的集合
+        List<FlowRule> ruleList=new ArrayList<>();
+        //创建流控规则
+        FlowRule rule = new FlowRule();
+        //设置受保护的资源，对该资源进行流控,这里配置的是请求名称
+        rule.setResource("/sentinel/testSentinel");
+        //设置流控规则为QPS模式
+        rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        //设置受保护的资源阀值，表示一秒之内只能访问一次，当超过一次的时候，多的会被流控
+        rule.setCount(1);
+        //讲rule流控规则添加到集合中
+        ruleList.add(rule);
+        //加载配置好的规则
+        FlowRuleManager.loadRules(ruleList);
+    }
+}
+
+
+
+=== 第 8 页 ===
+
+注意：在设置资源名称时，请求名称一定要和资源名称保持一致。
+ 
+2.1.6、测试功能
+ 
+测试正常效果
+启动项目，在浏览器中输入http://localhost:8004/sentinel/testSentinel请求，保持一秒钟以
+上刷新一次，查看页面显示效果：
+package com.baidu.controller;
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.Tracer;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/sentinel")
+public class SentinelController {
+    //测试流控
+    @RequestMapping("/testSentinel")
+    public String testSentinel(){
+        Entry entry=null;
+        try {
+            //设置资源名称，当前请求就是资源名称，sentinel针对资源进行限流。
+            entry = SphU.entry("/sentinel/testSentinel");
+            System.out.println("进入/sentinel/testSentinel");
+            return "进入/sentinel/testSentinel";
+        }catch (BlockException e){
+            //资源访问阻止，被限流或被降级
+            System.out.println("被流控了");
+            return "被流控了";
+        }catch(Exception ex) {
+            //若需要配置降级规则，则需要通过这种方式记录业务异常。
+            System.out.println("执行服务降级");
+            Tracer.traceEntry(ex,entry);
+        }finally {
+            if(entry!=null){
+                //退出，归还资源
+                entry.exit();
+            }
+        }
+        return null;
+    }
+}
+
+
+
+=== 第 9 页 ===
+
+测试被流控的效果
+快速刷新页面（一秒以内至少刷新两次），查看页面效果和控制台效果，从结果可以看出流
+控生效了。
+ 
+2.2、@SentinelResource用法
+ 
+上述案例中的控制器，代码太复杂，侵入性太高，我们可以考虑通过@SentinelResource实现控制
+器。
+2.2.1、创建配置类
+ 
+@SentinelResource注解用于改善控制器中资源定义和被流控降级以后的处理方法。
+使用该注解需要添加依赖，这里已经添加过了。
+需要配置一个SentinelResourceAspect对象的Bean。
+可以在com.baidu.config包中创建配置类来实现。
+<!--如果要使用@SentinelResourcce注解，则需要引入的依赖-->
+<dependency>
+    <groupId>com.alibaba.csp</groupId>
+    <artifactId>sentinel-annotation-aspectj</artifactId>
+    <version>1.8.6</version>
+</dependency>
+package com.baidu.config;
+import com.alibaba.csp.sentinel.annotation.aspectj.SentinelResourceAspect;
+
+
+
+=== 第 10 页 ===
+
+ 
+2.2.2、创建实体类
+ 
+创建com.baidu.pojo包，在该包下创建User实体类，代码如下：
+因为添加了lombok的依赖，所以只需要@Data注解即可，不需要写get/set方法和 toString()
+方法。
+ 
+2.2.3、创建控制器
+ 
+创建控制器
+@SentinelResource注解的相关属性可以查看https://sentinelguard.io/zh-cn/docs/annotation-s
+upport.html
+@SentinelResource注解用于写在处理请求的方法头部，主要属性如下：
+value属性：用于配置被流控的资源名称，资源名称就是请求名称
+blockHandler属性：用于配置被流控以后的降级服务处理方法。默认该方法必须声明在同一
+个类中。
+服务降级处理方法的定义有如下约定：
+1、方法的修饰符必须是public
+2、方法的返回值一定要和源方法（处理请求的方法）的返回值保持一致。
+3、方法的形参要与源方法的形参保持一致，并且顺序也必须一样。
+4、可以在方法的最后添加一个BlockException异常类的对象，可以区分使用的是
+什么规则的处理方法。
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+@Configuration
+public class SentinelResourceConfig {
+    //将SentinelResourceAspect对象配置成bean.
+    @Bean
+    public SentinelResourceAspect getAspect(){
+        return new SentinelResourceAspect();
+    }
+}
+package com.baidu.pojo;
+import lombok.Data;
+@Data
+public class User {
+    private Integer id;
+    private String name;
+    private String message;//用于保存流控的处理信息
+}
+  package com.baidu.controller;
+  
+  import com.alibaba.csp.sentinel.annotation.SentinelResource;
+
+
+
+=== 第 11 页 ===
+
+  
+2.2.4、配置规则
+ 
+修改com.baidu.config包中的FlowRuleConfig类，添加上user请求资源的流控规则。
+  import com.alibaba.csp.sentinel.slots.block.BlockException;
+  import com.baidu.pojo.User;
+  import org.springframework.web.bind.annotation.PathVariable;
+  import org.springframework.web.bind.annotation.RequestMapping;
+  import org.springframework.web.bind.annotation.RestController;
+  
+  @RestController
+  @RequestMapping("/user")
+  public class UserController {
+  
+  
+      //根据id获取用户对象的请求
+      @RequestMapping("/getUser/{id}")
+      @SentinelResource(value = "/user/getUser", blockHandler = "myHandlerUser")
+      public User getUserById(@PathVariable("id") Integer id) {
+          System.out.println("-------getUser--------id:"+id);
+  
+          User user=new User();
+          user.setId(id);
+          user.setName("xiaoye");
+          user.setMessage("当前的请求正常处理，没有被留空");
+          return user;
+      }
+  
+      //降级服务，表示请求被流控的时候执行的方法。
+      public User myHandlerUser(Integer id, BlockException e) {
+          //打印异常信息
+          e.printStackTrace();
+  
+          User user=new User();
+          user.setMessage("当前的请求被流控了");
+          return user;
+      }
+  }
+  
+package com.baidu.config;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Configuration;
+import java.util.ArrayList;
+import java.util.List;
+@Configuration
+public class FlowRuleConfig {
+    @PostConstruct
+
+
+
+=== 第 12 页 ===
+
+ 
+2.2.5、测试功能
+ 
+测试正常的请求
+启动项目，在浏览器中输入http://localhost:8004/user/getUser/1请求，
+注意：一秒以内只能发送一次请求，查看控制台和页面结果：
+    public void initFlowRules(){
+        //创建表示流控规则的集合
+        List<FlowRule> ruleList=new ArrayList<>();
+        //创建流控规则
+        FlowRule rule = new FlowRule();
+        //设置受保护的资源，对该资源进行流控,这里配置的是请求名称
+        rule.setResource("/sentinel/testSentinel");
+        //设置流控规则为QPS模式
+        rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        //设置受保护的资源阀值，表示一秒之内只能访问一次，当超过一次的时候，多的会被流控
+        rule.setCount(1);
+        //讲rule流控规则添加到集合中
+        ruleList.add(rule);
+        //添加用于测试@SentinelResource注解的流控规则
+        FlowRule rule2 = new FlowRule();
+        rule2.setResource("/user/getUser");
+        rule2.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        rule2.setCount(1);
+        //添加规则
+        ruleList.add(rule2);
+        //加载配置好的规则
+        FlowRuleManager.loadRules(ruleList);
+    }
+}
+
+
+
+=== 第 13 页 ===
+
+  
+ 
+测试被流控处理
+在一秒之内连续两次以上刷新请求，查看你页面和控制台结果，发现对应的流控生效了。
+ 
+ 
+2.2.6、blockHandlerClass属性
+ 
+@SentinelResource注解的blockHandlerClass属性：如果不想将降级服务处理方法放在同一个类
+中，则可以添加该属性，用于指定降级服务处理方法所在的类。例如：保存在User实体类中，则
+配置为blockHandlerClass=User.class
+注意：如果要保存到User类中（不是控制器中），则方法必须声明为静态方法，因为这些方
+法都是通过反射创建的对象。
+package com.baidu.pojo;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import lombok.Data;
+@Data
+public class User {
+    private Integer id;
+    private String name;
+    private String message;//用于保存流控的处理信息
+    //降级服务，表示请求被流控的时候执行的方法。
+    public static User myHandlerUser(Integer id, BlockException e) {
+        //打印异常信息
+        e.printStackTrace();
+        User user=new User();
+
+
+
+=== 第 14 页 ===
+
+控制器代码如下：
+测试流控，没有被流控的执行结果如下：
+测试被流控的执行结果如下：
+ 
+        user.setMessage("在User类中实现将当前的请求流控");
+        return user;
+    }
+}
+package com.baidu.controller;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.baidu.pojo.User;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/user")
+public class UserController {
+    //根据id获取用户对象的请求
+    @RequestMapping("/getUser/{id}")
+    @SentinelResource(value = "/user/getUser", blockHandler = 
+"myHandlerUser",blockHandlerClass = User.class)
+    public User getUserById(@PathVariable("id") Integer id) {
+        System.out.println("-------getUser--------id:"+id);
+        User user=new User();
+        user.setId(id);
+        user.setName("xiaoye");
+        user.setMessage("当前的请求正常处理，没有被留空");
+        return user;
+    }
+    
+}
+
+
+
+
+=== 微服务阿里巴巴课程07：sentinel应用二.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴课程07：sentinel应用二
+ 
+一、sentinel的控制台操作
+ 
+1.1、下载并启动控制台
+ 
+ 
+下载sentinel控制台地址：https://github.com/alibaba/Sentinel/releases
+使用控制台地址：https://sentinelguard.io/zh-cn/docs/dashboard.html
+ 
+1.2、启动控制台
+ 
+因为我们使用的spring cloud alibaba的版本是2022.0.0.0-RC2的，对应的sentinel版本为1.8.6，
+所以我们下载并使用这个版本。
+因为sentinel的1.8.6版本无法正常连接上控制台，所以 我们使用1.8.7版本。
+sentinel dashboard的控制台是一个jar文件，我们下载下来以后运行这个jar文件就可以使用
+了。默认使用的是8080端口。
+注意：启动 Sentinel 控制台需要 JDK 版本为 1.8 及以上版本。
+#不修改8080端口的指令启动
+java -jar sentinel-dashboard-1.8.7.jar
+
+
+
+=== 第 2 页 ===
+
+ 
+从 Sentinel 1.6.0 起，Sentinel 控制台引入登录功能，默认用户名和密码都是 sentinel
+控制台启动完成以后，可以在浏览器中输入http://127.0.0.1:8080请求，进入控制台登录页
+面，因为还没有任何服务整合sentinel，所以进入以后是空的。
+1.3、修改控制台端口
+ 
+因为控制台默认使用的是8080端口，这个端口很容易发生端口冲突，所以有必要修改端口。
+java -Dserver.port=8888 -Dsentinel.dashboard.auth.username=sentinel -
+Dsentinel.dashboard.auth.password=sentinel -jar sentinel-dashboard-1.8.7.jar
+
+
+
+=== 第 3 页 ===
+
+因为配置端口启动sentinel的命令太长，我们可以自己创建一个记事本，然后将命令保存进去，选
+择另存为：设置文件命名和后缀（这里我使用的是sentinel-start.bat），保存类型选择所有文件，
+并将该文件保存到jar文件的同一个目录 ，以后运行的时候只需要点击这个文件就自动启动
+sentinel了。
+ 
+二、阿里巴巴整合sentinel
+ 
+2.1、创建项目
+ 
+可以从order-web项目复制一份，重命名为order-sentinel，然后进行必要的调整，成为一个新的
+项目。
+更简便的方法就是直接新建一个模块（项目名：order-sentinel），并继承springcloud-
+parent。
+
+
+
+=== 第 4 页 ===
+
+2.2、项目整合sentinel
+ 
+2.2.1、添加依赖
+ 
+在需要整合的项目里面添加sentinel的依赖。
+例如order-sentinel项目需要整合到sentinel的控制台，则在该项目的pom.xml文件中添加如
+下依赖，版本会自动锁定。
+完整的pom.xml文件配置如下：
+这里之所以要排除掉对配置中心的依赖，那是因为我们在配置服务名称的时候，常用
+spring.application.name，如果通过这个配置时，在配置中心中没有对应的服务名称的配
+置，则会出现异常。
+<!--配置sentinel的启动器-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--配置sentinel的启动器-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+
+
+
+=== 第 5 页 ===
+
+ 
+2.2.2、创建配置文件
+ 
+为微服务设置sentinel控制台地址：在application.yml文件中添加如下配置
+注意：spring.cloud.sentinel.transport.dashboard 配置的是管理平台的地址和端口。
+ 
+2.2.3 创建启动器
+ 
+创建com.baidu包，并在该包下创建SringBoot的启动器，具体代码如下：
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+server:
+  port: 8005
+spring:
+  application:
+    name: order-sentinel
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8888
+  main:
+    allow-bean-definition-overriding: true   
+
+
+
+=== 第 6 页 ===
+
+ 
+2.2.3、创建openfeign接口
+ 
+创建com.baidu.feign包，并在该包下创建StockFeignService接口，通过该接口进行远程调用。
+ 
+2.2.4、创建控制器
+ 
+创建com.baidu.controller包，并在该包下创建控制器（SentinelController），具体代码如下：
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+@SpringBootApplication
+@EnableFeignClients
+public class OrderSentinelApplication8005 {
+    public static void main(String[] args) {
+        SpringApplication.run(OrderSentinelApplication8005.class,args);
+    }
+}
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestMapping;
+@FeignClient(value = "stock-service",path = "/stock")
+public interface StockFeignService {
+    //测试负载均衡
+    @RequestMapping("/testCluster")
+    public String testCluster();
+}
+import com.baidu.feign.StockFeignService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/sentinel")
+public class SentinelController {
+    @Autowired
+    private StockFeignService feignService;
+    //远程调用，测试负载均衡
+    @RequestMapping("/test")
+    public String test(){
+        System.out.println("-------test-----");
+        //远程调用
+        String res=feignService.testCluster();
+
+
+
+=== 第 7 页 ===
+
+ 
+2.2.5、测试功能
+ 
+先启动nacos注册中心，然后启动sentinel控制台，再启动三个stock-service提供者（如果不使用
+集群，则启动一个提供者即可），
+在启动提供者的时候，因为我们前面开启了nacos的鉴权，如果服务提供者没有使用配置中
+心，则需要在pom.xml文件中排除掉关于配置中心的依赖。
+修改服务提供者的全局配置文件（application.yml）,添加上登录nacos的账号与密码
+ 
+最后启动order-sentinel项目。发现在sentinel控制台中还是没有项目，这是因为我们只有发送请
+求到order-sentinel项目以后，sentinel控制台才能看到被监控的项目。
+每一个请求，只有被调用以后才会在sentinel控制台中查看的到。
+在浏览器中输入http://localhost:8005/sentinel/test请求，多刷新几次，查看页面显示结
+果：
+从结果可以看出，请求正常发送了，同时sentinel的的控制台也监控到了服务
+        return "sentinel远程调用成功，res="+res;
+    }
+}
+    <dependencies>
+      <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.alibaba.cloud</groupId>
+                    <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+server:
+  port: 9001
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        weight: 1
+      username: nacos
+      password: nacos
+
+
+
+=== 第 8 页 ===
+
+在sentinel控制台的实时监控中，可以看到如下图：
+ 
+可以在order-sentinel的控制器中再添加一个请求，然后在浏览器中发出该请求，查看sentinel的
+控制台，在实时监控中会有两个图，在族点链路中会有两个请求的配置信息：
+@RequestMapping("/flow")
+public String flow(){
+    return "flow test!!!";
+}
+
+
+
+=== 第 9 页 ===
+
+ 
+三、sentinel的控制规则
+ 
+一定要注意：sentinel配置的规则都是默认存储在内存中的，当重启项目以后，我们之前配置的所
+有规则都会丢失。
+3.1、流控规则
+ 
+流量控制（flow control），其原理是监控应用流量的QPS或并发线程数等指标，当达到指定的阈
+值时对流量进行控制，以避免被瞬时的流量高峰冲垮，从而保障应用的高可用性。
+限流阈值类型：
+QPS：表示每秒的请求数，就是说服务器在一秒的时间内处理多少个请求。
+3.1.1、设置QPS的流控规则
+ 
+进入簇点链路，选择具体的访问请求，点击流控按钮进行设置，单机阀值设置以后，当每秒的请求
+数量超过阀值时，则进行限流。
+点击新增以后，在流控规则中就会出现创建的规则，可以在这里对新建的规则进行修改和删除。
+测试结果：
+
+
+
+=== 第 10 页 ===
+
+在页面中发出http://localhost:8005/sentinelOrder/addOrder请求，连续刷新多次，查看结
+果。
+上图中出现的提示信息是sentinel配置好的，我们可以通过如下方式创建自定义的流控提示信息
+修改order-sentinel的控制器（OrderController），针对/sentinelOrder/addOrder请求，
+进行如下修改
+注意： @SentinelResource注解的value属性的取值只是当前的@RequestMapping中表示请
+求的字符串，没有带上控制器头部的@RequestMapping中的字符串。
+注意：在处理流控的方法形参，必须带上BlockException e，否在出现流控时，会出现异常
+而不是正常的流控提示信息。
+package com.baidu.controller;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+@RestController
+@RequestMapping("/sentinelOrder")
+public class OrderController {
+    @Autowired(required = false)
+    private RestTemplate restTemplate;
+    @RequestMapping("/addOrder")
+    @SentinelResource(value = "/addOrder", blockHandler = 
+"addOrderBlockHandler")
+    public String addOrder() {
+        System.out.println("-----进入了OrderController的addOrder方法---");
+        System.out.println("restTemplate:" + restTemplate);
+        //发出请求到库存提供者，获取操作结果
+        String url = "http://stock-service/stock/updateStock";
+        String result = restTemplate.getForObject(url, String.class);
+        return result;
+    }
+    @RequestMapping("/flow")
+    public String flow(){
+        return "flow test!!!";
+    }
+    //配置/sentinelOrder/addOrder请求被流控处理的结果
+    public String addOrderBlockHandler(BlockException e){
+
+
+
+=== 第 11 页 ===
+
+ 
+重启项目，因为sentinel的规则配置默认是保存到内存中的，所以重启项目以后我们需要重新配置
+flow请求的流控规则。
+注意在配置流控规则的时候，@SentinelResource注解的value属性取值只要配置当前的
+@RequestMapping中表示请求的值才能生效，而不是配置整个完整的请求路径
+  
+  
+        System.out.println("执行流控降级处理方法");
+        e.printStackTrace();
+        return "/sentinelOrder/addOrder请求被流控了";
+    }
+}
+
+
+
+=== 第 12 页 ===
+
+配置完成以后，在浏览器中发出请求，一秒以内发出2个以上的http://localhost:8005/sentinelOr
+der/addOrder请求，查看页面结果：
+  
+3.1.2、设置并发线程数的流控
+ 
+线程的并发数控制用于保护业务线程池不被慢线程调用耗尽。
+sentinel并发控制不负责创建和管理线程池，而是简单统计当前请求上下文的线程数目（即正在执
+行的调用数目），如果超出阀值，新的请求会立即拒绝。
+QPS流控与线程流控的对比
+如果要测试线程流控，我们需要使线程处于睡眠状态，否则无法看到效果。
+修改OrderController控制器，添加用于测试流控的处理的请求，代码如下：
+@RequestMapping("/flowThread")
+@SentinelResource(value = "/flowThread", blockHandler = 
+"flowThreadBlockHandler")
+public String flowThread(){
+    System.out.println("-----进入flowThread方法---");
+    try {
+        Thread.sleep(3000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    return "flowThread 正常访问线程";
+
+
+
+=== 第 13 页 ===
+
+ 
+ 
+测试线程流控
+启动nacos注册中心，启动sentinel控制台，然后启动提供者（stock-service)，启动消费者
+（order-sentinel），在浏览器中输入请求：http://localhost:8005/sentinelOrder/flowThre
+ad，进入sentinel控制台，按照如下方式设置线程流控规则。
+设置线程流控规则：注意是针对/flowThread设置，不是/sentinelOrder/flowThread请求
+注意：没有配置@SentinelResource注解是看不到/sentinelOrder/flowThread请求
+的子选项/flowThread的。
+}
+//被流控后执行的响应
+public String flowThreadBlockHandler(BlockException e){
+    return "/sentinelOrder/flowThread线程请求被流控了";
+}
+
+
+
+=== 第 14 页 ===
+
+打开两个浏览器(或者打开一个浏览器，快速刷新)，分别用于发出http://localhost:8005/sentinel
+Order/flowThread请求，查看结果：
+ 
+3.2、统一异常处理
+ 
+BlockException异常统一处理：
+如果针对不同的流控规则，处理的结果都相同，则可以使用统一处理，如果处理的结果各不相同，
+则不适合使用统一处理。
+例如：同样的流控规则，可以使用OPS，也可以使用线程，但是处理结果不一样，此时就不
+适合使用统一处理。还是要分开处理
+BlockException抽象类有如下五个子类，不同子类代表不同的规则异常。
+FlowException：表示接口限流异常
+DegradeException：表示服务降级异常
+ParamFlowException：表示热点参数限流异常
+SystemBlockException：表示触发了系统保护规则
+AuthorityException：表示权限授权异常
+3.2.1、创建异常处理类
+ 
+实现异常统一处理步骤：
+1、创建com.baidu.exception包，并在该包下创建MyException类，该类必须实现
+BlockExceptionHandler接口，具体代码如下
+注意：必须添加@@Component注解，将该类配置成spring的Bean。
+package com.baidu.exception;
+import 
+com.alibaba.csp.sentinel.adapter.spring.webmvc.callback.BlockExceptionHandle
+r;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowException;
+import com.alibaba.csp.sentinel.slots.system.SystemBlockException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Component;
+import java.io.PrintWriter;
+
+
+
+=== 第 15 页 ===
+
+ 
+3.2.2、创建控制器
+ 
+在openfeign接口中添加查询所有库存的方法
+@Component
+public class MyException implements BlockExceptionHandler {
+    @Override
+    public void handle(HttpServletRequest httpServletRequest, 
+HttpServletResponse httpServletResponse, BlockException e) throws Exception 
+{
+        System.out.println("输出请求信息以及规则详细信息："+ e.getRule());
+        //创建一个字符串变量，用于保存各种个则对应的提示信息
+        String res=null;
+        if(e instanceof FlowException){
+            res="请求被流控了";
+        }else if(e instanceof DegradeException){
+            res="服务被降级了";
+        }else if(e instanceof ParamFlowException){
+            res="热点参数被限流了";
+        }else if(e instanceof SystemBlockException){
+            res="触发了系统保护规则";
+        }else{
+            res="授权规则不通过";
+        }
+        System.out.println("res:"+res);
+        //将提示信息res写出到页面
+        //设置错误代码编号
+        httpServletResponse.setStatus(500);
+        
+        //设置响应字符集，防止页面提示信息显示乱码
+        httpServletResponse.setContentType("application/json");
+        httpServletResponse.setCharacterEncoding("utf-8");
+        
+        //通过响应对象获取写出的PrintWriter对象
+        PrintWriter writer=httpServletResponse.getWriter();
+        //将具体提示信息res写出
+        writer.write(res);
+    }
+}
+
+
+
+=== 第 16 页 ===
+
+ 
+在com.baidu.controller包中创建ExceptionController类。
+注意：如果使用统一异常处理，则可以去掉控制器中的@SentinelResource注解，以及对应
+的异常处理方法，具体代码如下：
+ 
+3.2.3、测试功能
+ 
+启动nacos注册中心，启动sentinel管理平台，然后启动order-service项目，在浏览器中输入htt
+p://localhost:8005/exception/addOrder请求，多刷新几次，进入sentinel控制台，查看实时监
+控，发现请求已经被监控到了。
+ 
+进入簇点链接，设置当前请求的流控规则。
+@FeignClient(value = "stock-service",path = "/stock")
+public interface StockFeignService {
+    
+    。。。。。。。。。。。。。。。。。。。
+    //查询所有库存库存信息
+    @RequestMapping("/getAll")
+    public List<Stock> getAll();
+}
+@RestController
+@RequestMapping("/exception")
+public class ExceptionController {
+    @Autowired
+    private StockFeignService feignService;
+    //测试负载均衡的流控
+    @RequestMapping("/addOrder")
+    public String addOrder(){
+        //远程调用getAll，查询所有库存信息
+        List<Stock> list=feignService.getAll();
+        return "addOrder请求正常处理了，结果是："+list;
+    }
+}
+
+
+
+=== 第 17 页 ===
+
+注意：在控制器中，请求方法前没有了@SentinelResource注解，所以请求里面不会有子选
+项，直接对请求配置规则即可。
+ 
+在浏览器中多刷新几次http://localhost:8005/exception/addOrder请求，查看页面显示结果：
+如果页面中出现乱码，那可能是因为浏览器字符集不是UTF-8，可以修改浏览器字符集或换
+一个浏览器测试。
+如果无法解决浏览器字符集问题，可以直接查看idea控制台输出的str的值。
+ 
+四、sentinel的流控模式
+ 
+
+
+
+=== 第 18 页 ===
+
+流控模式就在流控规则的高级选项中，有三种流控模式：1、直接  2、关联  3、链路，默认使用的
+是直接模式。
+4.1、直接流控模式
+ 
+直接模式：表示当前设置的流控规则只当前设置的资源（/addOrder）限流，不会影响其他与该资
+源相关的资源。
+前面用的都是直接流控模式，这里就不举例实现了。
+ 
+4.2、关联流控模式
+ 
+4.2.1、相关概念
+ 
+关联的概念：当两个资源（请求）之间具有资源争抢或者依赖关系的时候，我们称这两个资源（请
+求）便具有了关联。
+关联模式：关联模式选择以后，下面可以设置一个关联资源，需要注意的是：当前流控针对的是关
+联资源，当关联资源达到阀值以后，受影响的并不是关联资源（/addOrder）,而是设置的资源
+（/flow），直接对设置的资源（/flow）限流
+高优先级资源触发阈值，对低优先级资源限流。
+
+
+
+=== 第 19 页 ===
+
+ 
+4.2.2、测试实现
+ 
+4.2.2.1、创建控制器
+ 
+在com.baidu.controller包中创建SentinelController控制器，并创建请求add，表示添加订单，创
+建请求get表示查询订单。
+注意：这里控制器头部不要添加@RequestMapping，否则关联流控无法关联上
+ 
+4.2.2.2、设置关联流控模式
+ 
+package com.baidu.controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+public class SentinelController {
+    //添加订单
+    @RequestMapping("/add")
+    public String add(){
+        return "添加订单成功!";
+    }
+    //查询订单
+    @RequestMapping("/get")
+    public String get(){
+        return "查询订单成功";
+    }
+}
+
+
+
+=== 第 20 页 ===
+
+生成订单的优先级高于查询订单，我们需要设置的是查询订单请求（/get）的流控规则，当生成订
+单的请求（/add）达到阀值以后，实现对查询订单请求（/get）的限流。
+ 
+4.2.2.3、安装JMeter
+ 
+因为我们没办法在一秒之内发送三个 /add请求，同时又去发出/get请求，所以我们需要借助测试
+工具JMeter，通过该工具不停的发送 /add请求，使该请求达到阀值，然后自己在浏览器中输入htt
+p://localhost:8005/get请求，查看结果
+下载并启动JMeter。
+安装要求：Java8+环境。
+下载地址：https://jmeter.apache.org/download_jmeter.cgi
+
+
+
+=== 第 21 页 ===
+
+下载至本地后，解压压缩包，点击进入bin目录，双击jmeter.bat文件，会启动JMeter 
+GUI工具
+选择Options --> Choose Language --> Chinese(Simplified)，设置语言为中文简体
+ 
+4.2.2.4、测试功能
+ 
+先启动nacos注册中心，然后启动sentinel控制台，再启动JMeter，最后启动order-sentinel项
+目，在浏览器中发出
+http://localhost:8005/get请求，使sentinel实时监控中能看到对应的请求，然后在簇点连接中配
+置关联控制模式如下：
+
+
+
+=== 第 22 页 ===
+
+ 
+在JMeter中配置http://localhost:8005/add请求，确保在1秒之内发送2个以上的请求。
+创建线程组：
+ 
+设置线程组中的线程数以及完成这些线程的时间。
+这里设置的线程数是300，完成时间为100秒，表示每秒完成3个线程。
+ 
+在线程组中添加http请求
+
+
+
+=== 第 23 页 ===
+
+ 
+设置http请求的参数：
+协议：http
+服务器名称或IP：127.0.0.1
+端口号：8005
+http请求：GET
+路径：/add
+ 
+添加监听器，选择查看结果树，查看请求的结果。
+
+
+
+=== 第 24 页 ===
+
+选中查看结果树，然后点击中间的绿色三角形启动JMeter，自动发出http://localhost:8005/a
+dd请求，并且可以达到每秒2个请求以上。运行查看结果
+如果出现下图提示需要保存，直接选择No即可查看到运行的结果
+
+
+
+=== 第 25 页 ===
+
+ 
+在浏览器中输入http://localhost:8005/get请求，查看结果：
+从结果可以看出当关联的资源（/add）达到阀值以后，实际被限流的是当前资源（/get）
+查看JMeter的结果树，显示结果如下：
+
+
+
+=== 第 26 页 ===
+
+ 
+4.3、链路流控模式
+ 
+4.3.1、相关概念
+ 
+链路模式：只针对从指定链路访问到本资源的请求做统计，判断当前资源是否超过阈值。如果超
+过，则对入口资源的限流
+例如：A在调用C，B也在调用C，则A和B都是入口资源，C是当前资源。当A超过阀值时，对
+A资源进行限流。B资源依然可以随意访问，不受任何影响。
+ 
+ 
+4.3.2、测试实现
+ 
+注意：链路流控规则不仅仅可以对请求进行流控，也可以对方法进行流控
+如果要使用链路流控规则，需要到bootstrap.yml文件(application.yml文件也可以)中进行如下配
+置,默认值为true，表示收起调用链路，我们目的是展开调用链路
+spring.cloud.sentinel.web-context-unify= false
+ 
+4.3.2.1、项目环境准备
+ 
+在order-sentinel项目中创建com.baidu.service包，并在该包下创建OrderService接口，代码如
+下：
+
+
+
+=== 第 27 页 ===
+
+创建com.baidu.service.impl包，并在该包下创建OrderServiceImpl类，用于实现OrderService接
+口，代码如下：
+我们只要在逻辑层的业务方法上加上 @SentinelResource(value="getC")，只有这样才能对
+方法设置流控，否则找不到方法，当使用了该注解以后，我们之前配置的统一异常处理就失
+效了，所以需要在这里写上异常处理。
+注意：在处理流控的方法形参，必须带上BlockException e，否在出现流控时，会出现异常
+而不是正常的流控提示信息。
+在com.baidu.controller包中创建控制器LinkController，并设置两个不同的请求，都要求调用
+getOrder()方法。代码如下：
+package com.baidu.service;
+public interface OrderService {
+    //创建方法C的接口
+    public String getC();
+}
+package com.baidu.service.impl;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.baidu.service.OrderService;
+import org.springframework.stereotype.Service;
+@Service
+public class OrderServiceImpl implements OrderService {
+    //创建方法C的实现
+    @SentinelResource(value = "getC",blockHandler = "getCBlockHandler")
+    public String getC(){
+        return "C方法被正常调用！！";
+    }
+    //发生流控的异常处理方法
+    public String getCBlockHandler(BlockException e){
+        return "当前请求的方法被限流了！！";
+    }
+}
+package com.baidu.controller;
+import com.baidu.service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/link")
+public class LinkController {
+    @Autowired
+    private OrderService orderService;
+
+
+
+=== 第 28 页 ===
+
+修改bootstrap.yml文件
+添加spring.cloud.sentinel.web-context-unify= false配置。这里是properties写法，需要改
+成yml写法。
+ 
+4.3.2.2、设置链路流控模式
+ 
+先启动nacos注册中心，然后启动sentinel控制台，最后启动order-sentinel项目
+在浏览器中输入http://localhost:8005/link/A请求和http://localhost:8005/link/B请求，发现下面
+有两个getC资源，此时随便选择一个进行链路流控模式的设置都可以。
+    @RequestMapping("/A")
+    public String getA(){
+        String res=orderService.getC();
+        return "发出/link/A请求:"+res;
+    }
+    @RequestMapping("/B")
+    public String getB(){
+        String res=orderService.getC();
+        return "发出/link/B请求:"+res;
+    }
+}
+
+
+
+=== 第 29 页 ===
+
+ 
+4.3.2.3、测试功能
+ 
+在浏览器中输入http://localhost:8001/link/A请求，快速多刷新几次该请求，查看显示结果：
+ 
+五、sentinel的流控效果(了解)
+ 
+sentinel的流控效果有三种：1、快速失败    2、Warm Up     3、排队等待。 默认是快速失败。
+5.1、快速失败
+ 
+快速失败：当QPS超过任意规则的阈值后，新的请求就会被立即拒绝，拒绝方式为抛出
+FlowException。
+FlowException是BlockException的子类。
+
+
+
+=== 第 30 页 ===
+
+ 
+5.2、Warm UP
+ 
+Warm Up：也叫预热模式。预热模式，对超出阈值的请求同样是拒绝并抛出异常。但这种模式阈
+值会动态变化，从一个较小值逐渐增加到最大阈值。
+根据codeFactor（冷加载因子，默认3）的值，阈值开始从（设置的阀值/codeFactor）开始，经
+过预热时长，慢慢达到设置的QPS阈值。
+ 
+
+
+
+=== 第 31 页 ===
+
+5.3、排队等待
+ 
+排队等待：让所有请求进入一个队列中，然后按照阈值允许的时间间隔依次执行。后来的请求必须
+等待前面执行完成，如果请求
+预期的等待时间超出最大时长，则会被拒绝。阈值类型必须设置为 QPS ，否则无效。
+  
+  
+ 
+ 
+ 
+
+
+
+
+=== 微服务阿里巴巴课程08：sentinel应用三.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴课程08：sentinel应用三
+ 
+一、熔断降级规则
+ 
+除了流量控制以外，对调用链路中不稳定的资源进行熔断降级也是保障高可用的重要措施之一。我
+们需要对不稳定的弱依赖服务调用进行熔断降级，暂时切断不稳定调用，避免局部不稳定因素导致
+整体的雪崩。
+熔断降级作为保护自身的手段，通常在客户端（消费者）进行配置。
+ 
+1.1、熔断指标
+ 
+我们通常用以下几种方式来衡量资源是否处于稳定的状态：
+平均响应时间(DEGRADE_GRADE_RT): 当1s内持续发出N个请求，对应时刻的平均响应时间
+（秒级）都超过阈值(count,以ms为单位)，那么在接下来的时间（DegradeRule中的
+timeWindow,以s为单位）之内，对这个方法的调用都自动熔断.
+异常比例（DEGRADE_GRADE_EXCEPTION_RATIO）:当资源的每秒请求量 >=N(可配置)，并
+且每秒异常总数占通过量的比例超过阈值之后，资源进入降级状态，在接下来的时间内，对
+这个方法自动返回。异常比率的阈值范围是 [0.0, 1.0]，代表 0% - 100%。
+异常数（DEGRADE_GRADE_EXCEPTION_COUNT）: 当资源近1分钟的异常数目超过阈值之
+后会进行熔断。注意由于统计时间是分钟级别的，如果timeWindow小于60s，则结束熔断状
+态后可能继续接入熔断状态
+ 
+1.2、熔断策略
+ 
+服务降级的熔断策略有三种：1、慢调用比例。2、异常比例。3、异常数。
+如果发生了服务降级，则会抛出 DegradeException 异常。
+1.2.1、慢调用比例
+ 
+发生熔断的条件：发生慢调用的请求数量>=最小请求数比例阈值，并且请求数量必须大于最小请
+求数量。
+需要配置的相关参数：
+最大RT：单位毫秒，表示当前请求允许的最大响应时间，超过这个时间则是慢调用。
+比例阈值：取值范围在0--1之间，表示发生慢调用的比例
+
+
+
+=== 第 2 页 ===
+
+熔断时长：即熔断触发后持续的时间。资源进入熔断状态后，在配置的熔断时长内，请求都
+会快速失败。
+当超过熔断时长以后，此时熔断器处于半开状态，此状态下可以尝试接收一个请求进行
+处理，如果还是发生了慢调用，则立即又进入熔断状态，如果能正常服务，则熔断器关
+闭，回复正常调用状态。
+最小请求数：触发熔断的最小请求数目，若当前统计窗口内的请求数小于此值（10个/秒），
+即使达到熔断条件规则也不会触发
+ 
+1.2.1.1 创建控制器
+ 
+在order-sentinel项目中创建控制器DegradeController，代码如下：
+1.2.1.2 配置慢调用降级
+ 
+针对/degrade/degradeThread请求，配置慢调用降级：
+package com.baidu.controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/degrade")
+public class DegradeController {
+    //测试慢调用
+    @RequestMapping("/degradeThread")
+    public String degradeThread(){
+        try {
+            //使线程睡眠2秒
+            Thread.sleep(2000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return "提供了正常服务，没有发送慢调用";
+    }
+}
+
+
+
+=== 第 3 页 ===
+
+ 
+ 
+1.2.1.3 测试功能
+ 
+因为要想发生满调用熔断，需要快速发出10个请求，并且在这10个请求中至少有一个的处理时长
+超过1000毫秒，所以我们需要借助JMeter软件发出http://localhost:8005/degrade//degradeThre
+ad请求。注意添加查看结果的监听器，
+设置线程组，在11秒内发送100个请求，从而实现有10个请求，在1秒钟之内有请求没有完成
+设置请求，具体设置如下：
+
+
+
+=== 第 4 页 ===
+
+设置查看结果的监听器。
+ 
+在运行 JMeter 的线程以后，我们自己在浏览器中输入：http://localhost:8005/degrade//degrad
+eThread请求，查看页面效果：
+从结果可以看出：执行了统一异常处理，发生了熔断。
+ 
+1.2.2、异常比例
+ 
+发生熔断的条件：发生异常调用的请求数量>=最小请求数比例阈值。，并且请求数量必须大于最
+小请求数量
+需要配置的相关参数：
+比例阈值：取值范围在0--1之间，表示发生异常调用的比例
+熔断时长：即熔断触发后持续的时间。资源进入熔断状态后，在配置的熔断时长内，请求都
+会快速失败。
+当超过熔断时长以后，此时熔断器处于半开状态，此状态下可以尝试接收一个请求进行
+处理，如果还是发生了慢调用，则立即又进入熔断状态，如果能正常服务，则熔断器关
+
+
+
+=== 第 5 页 ===
+
+闭，回复正常调用状态。
+最小请求数：触发熔断的最小请求数目，若当前统计窗口内的请求数小于此值（5个/秒），即使达
+到熔断条件规则也不会触发
+ 
+1.2.2.1 创建控制器
+ 
+修改DegradeController控制器，在该控制器中添加用于测试异常比例熔断的请求，代码如下：
+ 
+1.2.2.2 配置异常比例降级
+ 
+针对/degrad0e/degradeException请求配置异常比例条件：
+//测试异常比例
+@RequestMapping("/degradeException")
+public String degradeException(){
+    //发生除零异常
+    int a= 10/0;
+    return "没有发生异常比例";
+}
+
+
+
+=== 第 6 页 ===
+
+ 
+1.2.2.3 测试功能
+ 
+直接在浏览器中输入http://localhost:8005/degrade/degradeException请求，查看页面，会发现
+出现500错误，结果如下：
+出现上述结果是正常的，多刷新几次请求，会发现如下结果：
+ 
+1.2.3、异常数
+ 
+发生熔断的条件：发生异常调用的请求数量>=异常数，并且请求数量必须大于最小请求数量。
+需要配置的相关参数：
+异常数：表示发生异常调用的数量，当数量达到这个值以后，则执行熔断。
+熔断时长：即熔断触发后持续的时间。资源进入熔断状态后，在配置的熔断时长内，请求都
+会快速失败。
+当超过熔断时长以后，此时熔断器处于半开状态，此状态下可以尝试接收一个请求进行
+处理，如果还是发生了慢调用，则立即又进入熔断状态，如果能正常服务，则熔断器关
+
+
+
+=== 第 7 页 ===
+
+闭，回复正常调用状态。
+最小请求数：触发熔断的最小请求数目，若当前统计窗口内的请求数小于此值（2个/秒），即使达
+到熔断条件规则也不会触发
+ 
+1.2.3.1 创建控制器
+ 
+修改控制器DegradeController，添加处理degradeNum请求的方法，代码如下：
+ 
+1.2.3.2 配置异常数降级
+ 
+针对/degrade/degradeNum请求，配置异常数降级
+//测试异常数
+@RequestMapping("/degradeNum")
+public String degradeNum(){
+    //发生除零异常
+    int a=10/0;
+    return "没有发生异常数熔断";
+}
+
+
+
+=== 第 8 页 ===
+
+ 
+1.2.3.3 测试功能
+ 
+直接在浏览器中输入http://localhost:8005/degrade/degradeNum请求，查看页面，会发现出现
+500错误，结果如下：
+出现上述结果是正常的，多刷新几次，可以看到如下结果：从结果可以看出，已经发生了熔断。
+二、sentinel整合openfeign实现降级服务
+ 
+sentinel整合openfeign实现降级服务：当请求发生熔断以后，会抛出对应的异常，从而去执行统
+一异常处理，这样的处理并不友好，我们可以结合openfeign，使请求执行相应的降级服务方法，
+这样可以更友好的提供提示信息。
+
+
+
+=== 第 9 页 ===
+
+ 
+2.1、实现sentinel整合openfeign
+ 
+2.1.1、创建项目
+ 
+目前项目已经实现了与openfeign的整合，所以不需要重新创建项目。
+2.1.1.1 创建提供者
+ 
+创建服务提供者项目product-service。
+
+
+
+=== 第 10 页 ===
+
+在pom.xml中添加依赖
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>product-service</artifactId>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <!--排除掉配置中心的依赖-->
+            <exclusions>
+
+
+
+=== 第 11 页 ===
+
+在resources目录下创建application.yml文件，并进行如下配置：
+ 
+创建com.baidu包，并在 该包下创建SpringBoot的启动器
+ 
+在控制器ProductController中添加testDegrade请求，用于测试异常降级
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>mybatis-plus-boot-starter</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba.cloud</groupId>
+                    <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>
+server:
+  port: 9004
+spring:
+  application:
+    name: product-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class ProductServiceApplication9004 {
+    public static void main(String[] args) {
+        SpringApplication.run(ProductServiceApplication9004.class,args);
+    }
+}
+package com.baidu.controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/product")
+public class ProductController {
+
+
+
+=== 第 12 页 ===
+
+测试服务提供者的请求：
+在浏览器中输入：http://localhost:9004/product/testDegrade请求，查看页面显示异常结
+果（出现这种结果是正常的）。
+查看product-service项目的控制台，查看如下结果，发现如下结果也是正常的
+ 
+2.1.1.2 创建消费者
+ 
+创建项目（sentinel-openfeign）用于表示服务消费者，实现通过openfeign调用product-service
+的服务提供者。
+    
+    //测试异常降级
+    @RequestMapping("/testDegrade")
+    public String testDegrade(){
+        System.out.println("product-service项目测试testDegrade请求");
+        int a=10/0;  //发生异常
+        return "正常调用，没有发生异常";
+    }
+}
+
+
+
+=== 第 13 页 ===
+
+在pom.xml文件中配置依赖
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>sentinel-openfeign</artifactId>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+   <dependencies>
+        <!--配置sentinel的启动器-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
+        <!--引入公共模块-->
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+
+
+
+=== 第 14 页 ===
+
+在resources目录下创建application.yml文件，具体代码如下：
+创建com.baidu包，并在该包下创建SpringBoot的启动器
+创建com.baidu.service包，并在该包下创建ProductFeignService接口，用于将请求发送到提供
+者。
+            <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>mybatis-plus-boot-starter</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba.cloud</groupId>
+                    <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>
+server:
+  port: 8006
+spring:
+  application:
+    name: sentinel-openfeign
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+  main:
+    allow-bean-definition-overriding: true
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+@SpringBootApplication
+@EnableFeignClients
+public class SentinelOpenfeignApplication8006 {
+    public static void main(String[] args) {
+        SpringApplication.run(SentinelOpenfeignApplication8006.class,args);
+    }
+}
+
+
+
+=== 第 15 页 ===
+
+创建控制器：调用提供者的方法，结果被调用的方法发生了异常。
+ 
+2.1.1.3 测试异常传播行为
+ 
+启动提供者（product-service），启动消费者（sentinel-openfeign），在浏览器中输入http://lo
+calhost:8006/testOrderDegrade请求，查看页面结果：
+package com.baidu.service;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestMapping;
+@FeignClient(value = "product-service",path = "/product")
+public interface ProductFeignService {
+    
+    //测试异常降级
+    @RequestMapping("/testDegrade")
+    public String testDegrade();
+}
+package com.baidu.controller;
+import com.baidu.service.ProductFeignService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/ProductFeign")
+public class ProductFeignController {
+    @Autowired(required = false)
+    private ProductFeignService productFeignService;
+    //接收请求。调用提供者的方法，结果被调用的方法发生了异常。
+    @RequestMapping("/testOrderDegrade")
+  public String testOrderDegrade(){
+        String res=productFeignService.testDegrade();
+        return res;
+    }
+}
+
+
+
+=== 第 16 页 ===
+
+查看消费者控制台，会发现出现了异常：
+查看提供者控制台，会发现也出现了异常：
+之所以提供者和消费者都出现了异常，那是因为提供者无法提供正常服务，从而导致消费者也无法
+正常完成线程任务。
+ 
+2.1.2、实现整合
+ 
+2.1.2.1 配置消费者的依赖
+ 
+因为降级服务都是写消费端（消费者）的，我们在消费端配置sentinel的依赖，即配置sentinel-
+openfeign项目的pom.xml文件。
+<!--配置sentinel的启动器-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--配置sentinel的启动器-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+
+
+
+=== 第 17 页 ===
+
+ 
+2.1.2.2 修改消费者全局配置文件
+ 
+在全局配置文件中添加feign对sentinel的支持。
+配置feign.sentinel.enabled=true，默认是false
+ 
+2.1.2.3 配置降级服务处理类
+ 
+创建com.baidu.feign.impl包，在该包下创建降级服务处理类（ProductFeignServiceImpl），该
+类必须实现ProductFeignService接口，代码如下：
+注意添加@Component注解，将该类标记为spring的Bean。
+            </exclusion>
+            <exclusion>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+server:
+  port: 8006
+spring:
+  application:
+    name: sentinel-openfeign
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8888
+  main:
+    allow-bean-definition-overriding: true
+#配置feign对sentinel的支持
+feign:
+  sentinel:
+    enabled: true
+
+
+
+=== 第 18 页 ===
+
+注意：这里的实现类配置成Bean以后，在控制器中注入ProductFeignService接口的值时会
+报错，这个可以不用管。
+ 
+2.1.2.4 修改openfeign接口
+ 
+在@FeignClient注解中添加fallback属性，用于指向降级服务处理类，表示当发生降级以后，执行
+该类中对应的降级服务处理方法。
+ 
+2.1.2.5 测试降级服务
+ 
+启动提供者（product-service），然后在启动消费者（sentinel-openfeign），在浏览器中输入ht
+tp://localhost:8006/ProductFeign/testOrderDegrade请求，查看页面结果：
+从结果可以看出执行了降级服务处理方法。在消费者的控制台是没有出现异常的。而提供者
+的控制台出现了除零异常，这是属于正常现象。
+package com.baidu.service.impl;
+import com.baidu.service.ProductFeignService;
+import org.springframework.stereotype.Component;
+@Component
+public class ProductFeignServiceImpl implements ProductFeignService {
+    //测试降级服务
+    public String testDegrade(){
+        return "发生了熔断，现在执行的是服务降级处理方法";
+    }
+}
+@Autowired(required = false)
+private ProductFeignService productFeignService;
+package com.baidu.service;
+import com.baidu.service.impl.ProductFeignServiceImpl;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestMapping;
+@FeignClient(value = "product-service",path = "/product",fallback = 
+ProductFeignServiceImpl.class)
+public interface ProductFeignService {
+    //测试异常降级
+    @RequestMapping("/testDegrade")
+    public String testDegrade();
+}
+
+
+
+=== 第 19 页 ===
+
+ 
+三、热点参数流控
+ 
+3.1、基本概念
+ 
+热点参数流控：又叫热点参数限流，它会统计传入参数中的热点参数，并根据配置的限流阈值与模
+式，对包含热点参数的资源调用进行限流。热点参数限流可以看做是一种特殊的流量控制，仅对包
+含热点参数的资源调用生效。
+注意：热点参数流控必须结合@SentinelResource注解使用，针对方法进行配置，如果针对
+请求进行配置是没有效果的。
+ 
+3.2、具体实现
+ 
+3.2.1、创建控制器
+ 
+我们进入order-sentinel项目，创建控制器（HotController），在控制器中添加带参数的请求方
+法，代码如下：
+package com.baidu.controller;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/hot")
+public class HotController {
+    
+    @RequestMapping("/testHot/{id}")
+    @SentinelResource(value="/testHot",blockHandler = "MyBlockHandler")
+    public String myTestHot(@PathVariable("id")Integer id){
+        System.out.println("正常访问hot参数：id:"+id);
+        return "正常访问hot参数：id:"+id;
+    }
+
+
+
+=== 第 20 页 ===
+
+ 
+3.2.2、配置热点参数流控规则
+ 
+启动order-sentinel项目，在浏览器中发出http://localhost:8005/hot/testHot/1请求，进入
+sentinel控制台，对/testHot请求的子选项进行配置热点流控规则如下：
+参数索引：表示在控制器中，需要设置流控的参数的下标位置，下标从0开始。
+单机阈值：单机阈值表示一秒钟内发送的QPS请求数量。
+1、如果参数大部分值都是热点参数，那单机阈值就主要针对热点参数进行流控。后续
+额外针对普通参数值进行流控。
+2、如果大部份值都是普通流量，那单机阈值就主要针对普通流量进行流控。后续额外
+针对热点参数值进行流控。
+注意：根据id查询，一般都属于普通流量。
+统计窗口时长：表示在配置的时间内统计总共有多少个QPS请求。
+    public String MyBlockHandler(Integer id, BlockException e){
+        return "热点异常处理";
+    }
+}
+
+
+
+=== 第 21 页 ===
+
+设置热点参数限流，只有在上面的热点规则配置以后，我们点击编辑，就可以对需要额外配
+置的热点参数进行限流配置：
+下面的配置表示对id=1的请求，当达到2个以上的时候就会进行限流。
+注意：在配置完成以后，一定要点击添加，这样配置的参数才会保存下来。
+ 
+3.2.3、测试功能
+ 
+测试热点流控(如果热点流控规则编辑以后没有保存，所以无法正常查看到如下结果)
+在浏览器中连续发起三个以上http://localhost:8005/hot/testHot/1请求，查看页面效果如
+下：
+ 
+测试普通流控
+因为个人手速问题，我们很难在1秒钟之内发送10个以上请求，所以我们需要借助JMeter进
+行测试
+首先创建线程组，然后配置在15秒中之内发送300个线程。
+
+
+
+=== 第 22 页 ===
+
+在线程组中能添加http请求，设置请求路径为/testHot/2，这里设置的id=2不属于热点
+流控，只是普通的QPS流控。
+创建监听器，查看结果树，执行保存以后进行运行。从结果可以看出当普通参数达到
+10/秒以后，也会被流控。
+ 
+四、系统规则（无法看到效果）
+ 
+4.1、配置系统规则的原因
+ 
+容量评估不到位，某个大流量接口限流配置不合理或配有配置，导致系统崩溃，来不及进行处理。
+突然发现机器的Load和CPU的利用率等快速飙高，但却没有办法很快的确认具体原因，从而来不
+及处理。
+当其中一台机器挂了之后，本该由这台机器处理的流量被负载均衡到另外的机器上，另外的机器也
+被打挂了，引起系统雪崩。
+希望有一个全局的兜底防护，即使缺乏容量评估也有一定的保护机制。
+ 
+
+
+
+=== 第 23 页 ===
+
+4.2、配置系统规则
+ 
+直接进入sentinel控制台的系统规则，点击新增系统规则，可以查看到如下界面：
+LOAD：仅linux系统有效，表示自适应系统保护（了解即可）
+RT：当单台机器上所有入口流量的并发线程达到阈值就触发系统保护。
+入口QPS：当单台机器上所有入口流量的QPS达到阈值就触发系统保护。
+CPU使用率：当系统CPU使用率超过阈值就触发系统保护，取值范围在0.0--1.0之间。
+ 
+4.3、测试功能
+ 
+4.3.1、测试CPU使用率
+ 
+先观察自己处理器的占用率，配置一个值，使该值小于当前处理器的占用率。
+启动order-sentinel项目，在浏览器中输入一个请求（随便一个可以访问到控制器的请求都可
+以）：http://localhost:8001/testHot/1
+查看页面显示效果，发现执行了统一异常处理。
+4.3.2、测试入口QPS
+ 
+设置入口QPS的阈值：
+注意：这里设置的2并不表示系统接收两个请求以后就触发阈值，而是要达到系统平均接收到
+的请求达到2个以后才会触发。
+
+
+
+=== 第 24 页 ===
+
+启动order-sentinel项目，在浏览器中输入一个请求（随便一个可以访问到控制器的请求都可
+以），多刷新几次，查看结果：
+注意这里的结果并没有执行统一异常处理，而是执行了自己配置的降级处理，这也是正常
+的。
+ 
+五、规则持久化
+ 
+目前为止，我们配置的规则信息，当重启项目以后，配置的规则都丢失了，这是因为我们配置的规
+则都保存在内存中，但是当项目正式发布运行以后，这种情况是不被允许的。
+实现持久化的三种模式：
+5.1、原始模式
+ 
+如果不做任何修改，Dashboard 的推送规则方式是通过 API 将规则推送至客户端并直接更新到内
+存中。
+这种模式的好处就是简单，无依赖，坏处就是应用重启以后规则就会消失，仅用于简单测试，不能
+用于生产环境。
+
+
+
+=== 第 25 页 ===
+
+ 
+ 
+5.2 、拉模式(pull)
+ 
+Sentinel的pull模式是一种规则管理模式，它允许Sentinel客户端从本地文件、数据库或远程配置
+中心等数据源中定期拉取规则配置，并更新本地缓存。（了解即可）
+ 
+ 
+5.3、推送模式（push)：
+ 
+Sentinel的push模式是一种规则推送模式，在nacos的配置中心配置规则，然后推送给sentinel的
+控制台。并由Sentinel客户端监听这些配置中心的变化，从而实时更新本地配置规则。
+
+
+
+=== 第 26 页 ===
+
+ 
+5.4、推送模式的实现
+ 
+基于nacos配置中心控制台实现推送模式原理简介：
+首先在nacos配置中心添加对应流控规则的配置。然后由nacos配置中心推送给sentinel的控
+制台。
+Sentinel客户端链接Nacos，获取规则配置；并监听Nacos配置变化，如发生变化，就更新本
+地缓存（从而让本地缓存总是和Nacos一致）
+以order-sentinel项目作为案例，进行如下调整：
+5.4.1 引入依赖
+ 
+添加sentinal与nacos的依赖
+sentinel-datasource-nacos 是 Sentinel 为 Nacos 扩展的数据源模块，允许将规则数据存储
+在 Nacos 配置中心，在微服务启动时利用该模块 Sentinel 会自动在 Nacos下载对应的规则
+数据。
+
+
+
+=== 第 27 页 ===
+
+完整依赖如下：
+注意：这里不能排除掉nacos配置中心的依赖
+ 
+5.4.2 配置流控信息
+ 
+我们在nacos配置中心配置的流控规则，主要用到如下属性：
+resource：资源名，即限流规则的作用对象
+count：限流阈值
+grade：限流阈值类型（QPS或并发线程数）
+limitApp：流控针对的调用来源，若为default则不区分调用来源。（也就是命名空间配置 ，
+默认default）
+stategy：调用关系限流策略
+controlBehavior：流量控制效果（直接拒绝、WarmUP、匀速排队）
+进入nacos的控制台，进入配置管理--->配置列表，点击加号或新建配置：
+<dependency>    
+    <groupId>com.alibaba.csp</groupId>  
+    <artifactId>sentinel-datasource-nacos</artifactId>  
+</dependency>
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--配置sentinel的启动器-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+    </dependency>
+    <!--配置sentinel整合nacos的数据源-->
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-datasource-nacos</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+
+
+
+=== 第 28 页 ===
+
+配置的json格式文档如下：DataId为：order-sentinel-flow-rule
+注意：下面配置，因为json格式无法识别注释，所以在使用的时候不要带注释，否则会报
+错。
+ 
+在配置中心的test命名空间中创建如下配置（更换别的命名空间也可以）
+ 
+[
+    {
+        "resource":"/sentinel/flow",#资源名，说明对那个URI进行流控
+        "count":2, #超过2个QPS限流将被限流
+        "grade":1, #类型 0-线程 1-QPS
+        "limitApp":"default", #命名空间，默认default
+        "strategy":0, #限流策略: 0-直接 1-关联 2-链路
+        "controlBehavior":0, #控制行为: 0-快速失败 1-WarmUp 2-排队等待
+        "clusterMode":false #是否集群模式
+    }
+]
+
+
+
+=== 第 29 页 ===
+
+5.4.3 修改全局配置文件
+ 
+将application.yml中的配置全部注释掉。
+创建bootstrap.yml文件，添加对应配置
+注意修改应用名称spring.application.name=order-sentinel，这里的应用名称可以不用和
+DataId相同。
+一个项目可以配置多个流控规则，一个流控规则就是一个文件，如果同名了，那就没办
+法读取多个文件。
+下面配置需要手动书写：
+如果开启了权限，则一定要配置用户名和密码，如果没有开启，可以不用配置。
+完整的bootstrap.yml配置如下：
+spring:
+  cloud:
+    sentinel:
+      datasource:
+        mytest: #数据源名称，可以自定义,如果是流控规则，建议取名flow
+          nacos:
+            server-addr: 127.0.0.1:8848
+            namespace: d43361e8-7f29-45ff-8f27-36b1954fae93
+            data-id: order-sentinel-flow-rule
+            group-id: DEFAULT_GROUP
+            rule-type: flow
+            username: nacos
+            password: nacos
+server:
+  port: 8005
+spring:
+  application:
+    name: order-sentinel
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8888
+      eager: true #取消sentinel控制台的懒加载
+      datasource:
+        mytest: #数据源名称，可以自定义,如果是流控规则，建议取名flow
+          nacos:
+            server-addr: 127.0.0.1:8848
+            namespace: d43361e8-7f29-45ff-8f27-36b1954fae93
+            data-id: order-sentinel-flow-rule
+            group-id: DEFAULT_GROUP
+            rule-type: flow
+            username: nacos
+            password: nacos
+
+
+
+=== 第 30 页 ===
+
+ 
+下面是各种流控规则的yml配置参考模板：
+ 
+5.4.4 查看控制器请求
+ 
+查看控制器的flow请求，代码如下：
+  main:
+    allow-bean-definition-overriding: true
+spring: 
+  cloud:    
+    sentinel:   
+      datasource:   
+        # 名称随意  
+        flow:   
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-flow-rules  
+            group-id: SENTINEL_GROUP    
+            # 规则类型，取值见： 
+            # org.springframework.cloud.alibaba.sentinel.datasource.RuleType 
+            rule-type: flow 
+        degrade:    
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-degrade-rules   
+            group-id: SENTINEL_GROUP    
+            rule-type: degrade  
+        system: 
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-system-rules    
+            group-id: SENTINEL_GROUP    
+            rule-type: system   
+        authority:  
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-authority-rules 
+            group-id: SENTINEL_GROUP    
+            rule-type: authority    
+        param-flow: 
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-param-flow-rules    
+            group-id: SENTINEL_GROUP    
+            rule-type: param-flow
+
+
+
+=== 第 31 页 ===
+
+flow请求针对限流结果，执行统一限流处理。
+ 
+5.4.5、测试结果
+ 
+先启动nacos，再启动sentinel，最后启动order-sentinel项目，进入sentinel控制台，查看流控规
+则，发现规则已经被nacos推送过来了。
+在360浏览器中输入请求http://localhost:8005/sentinel/flow，查看结果：
+多刷新几次，查看流控结果：发现已经限流成功了，也说明我们在nacos中配置的持久化流控信息
+生效了。
+ 
+@RequestMapping("flow")
+//  @SentinelResource(value = "flow",blockHandler = "flowBlockHandler")
+public String flow(){
+    return "flow test!!!";
+}
+
+
+
+
+=== 微服务阿里巴巴课程10：GateWay网关.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴10：GateWay网关
+ 
+一、Spring Cloud GateWay组件
+ 
+1.1 网关简介
+ 
+微服务项目可能部署在不同机房，不同地区，不同域名（网址）下。此时客户端（浏览器/手机/软
+件工具）想要请求对应的服务，都需要知道机器的具体 IP 或者域名 URL，当微服务实例众多时，
+这是非常难以记忆的，对于客户端来说也太复杂难以维护。此时就有了网关，客户端相关的请求直
+接发送到网关，由网关根据请求标识解析判断出具体的微服务地址，再把请求转发到微服务实例。
+这其中的记忆功能就全部交由网关来操作了。
+ 
+这时候就会发现：只要按照网关地址/服务名称/接口的格式访问，就可以得到成功响应
+ 
+
+
+
+=== 第 2 页 ===
+
+1.2 GateWay相关概念
+ 
+1.2.1 核心概念
+ 
+路由（route） 路由是网关最核心部分，路由信息由一个id（自定义）、一个目的uri（配置需要
+转发的目标地址）、一组断言工厂（用于路由规则的匹配）和一组Filter（用于业务逻辑处理）组
+成。如果断言为真，则说明请求uri和配置的路由匹配。
+断言的主要作用是用通配的方式，将用户请求与断言进行匹配，如果匹配上，则跳转到对应的uri
+请求地址。
+过滤器Filter可以对请求和响应进行处理。
+http://localhost:9999/order/addOrder
+id: 自定义 order-web-router
+uri: http://localhost:8001
+断言: /order/**            /order/addOrder
+http://localhost:8001/order/addOrder
+1.2.2 注意事项
+ 
+Spring Cloud Gateway是由webFlux+Netty+Reactor实现的响应式的API网关，它不能在传统的
+servlet容器中工作，也不能构建成war包
+SpringCloud Gateway使用的web框架为webflux，和SpringMVC不兼容。可以整合sentinel。
+redis底层不再使用jedis，而是lettuce【[ˈletɪs]】。
+Spring Cloud Gateway的目的是为微服务架构提供一种简单且有效的API路由的管理方式，并基于
+Filter的方式提供网关的基本功能，例如安全认证，监控，限流等等。
+二、GateWay用法
+ 
+2.1 基础用法
+ 
+2.1.1 创建项目
+ 
+创建一个空的maven的module项目（项目名为gateway，可以自定义），该项目继承
+springcloud-parent，并保存在父项目的目录中。
+
+
+
+=== 第 3 页 ===
+
+ 
+2.1.2 添加依赖
+ 
+在pom.xml文件中添加gateway的依赖，如下：
+注意：在引入依赖时，不能引入spring-boot-starter-web的依赖，因为gateway与
+springmvc不兼容。
+2.1.3 创建全局配置文件
+ 
+在resources目录下创建application.yml文件（或者bootstrap.yml文件也可以）。并在该文件中
+进行如下配置：
+routes：配置路由规则，取值是List集合，所以可以通过横杠配置多组值（横杠前面有两个空
+格，后面也有一个空格）。
+predicates: 配置断言规则，用于路由规则的匹配，注意predicates的取值也是一个List集
+合，但是取值是字符串，所以用等号连接，而不是用冒号连接取值。
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--添加gateway的依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+</dependencies>
+
+
+
+=== 第 4 页 ===
+
+filters: 配置过滤器
+注意：这里即使没有在注册中心注册，也必须配置服务名称，否则系统会报如下错误：
+2.1.4 创建启动器
+ 
+在java目录下创建com.baidu包，并在该包下创建项目的启动类（GateWayApp9999），代码如
+下：
+2.1.5 测试功能
+ 
+调整项目
+- StripPrefix=1 用于去掉第一级的路径 order-service，将请求转换成
+http://localhost:8001/addOrder，然后请求向下传递到控制器
+#参考配置：》
+http://localhost:9999/order-web/addOrder  -->http://localhost:9999/addOrder
+java.lang.IllegalArgumentException: Param 'serviceName' is illegal, 
+serviceName is blank
+server:
+  port: 9999
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes: #可以配置多组路由，每组路由都必须包含id,uri,predicates,对于过滤器看情况
+使用
+        - id: order-web-router
+          uri: http://localhost:8001  #http://localhost:8001/order/addOrder
+          predicates:
+            - Path=/order-web/**  #http://localhost:9999/order-
+web/order/addOrder
+          filters:
+            - StripPrefix=1
+        - id: stock-serice-router
+          uri: http://localhost:9001
+          predicates:
+            - Path=/stock/**
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class GateWayApp9999 {
+    public static void main(String[] args){
+        SpringApplication.run(GateWayApp9999.class,args);
+    }
+}
+
+
+
+=== 第 5 页 ===
+
+先调整order-web和stock-service项目的依赖，排除掉对配置中心的依赖。具体配置如下：
+调整调整order-web和stock-service项目的全局配置文件，添加上登录nacos注册中心的用户
+名和密码
+ 
+功能测试：
+先启动order-web和stock-service项目，测试http://localhost:8001/order/addOrder请求和
+http://localhost:9001/stock/getAll请求是否成功，发现请求都正常了。
+启动gateway项目，通过该项目作为网关，发出http://localhost:9999/order-web/order/addOrd
+er请求，查看结果发现已经转发到order-web项目中了，说明网关生效了。
+在浏览器中发出http://localhost:9999/stock/getAll请求，查看结果发现已经转发到stock-service
+项目中了，说明网关生效了。
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+spring:
+  cloud:
+    nacos:
+      username: nacos
+      password: nacos
+
+
+
+=== 第 6 页 ===
+
+ 
+2.2 gateway整合nacos注册中心
+ 
+上述案例中，我们的转发路径都是在配置文件application.yml中直接写死的，当搭建集群或者项
+目太多，这样直接将转发的目标地址写死会比较复杂，所以可以借助于注册中心的服务名称，将请
+求转发到对应的服务中去即可。
+gateway整合nacos的注册中心实现步骤如下：
+2.2.1 添加依赖
+ 
+在gateway项目的pom.xml文件中添加nacos服务注册中心的相关依赖。
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--添加gateway的依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <!--排除springboot的web支持，因为gateway网关与springmvc不兼容-->
+            <exclusion>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </exclusion>
+            
+            <!--排除掉mybatis-plus，因为网关不用操作数据库-->
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+            
+            <!--排除nacos的配置中心依赖，因为目前我们只是整合nacos的注册中心，不用配置
+中心-->
+            <exclusion>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+            </exclusion>
+        </exclusions>
+
+
+
+=== 第 7 页 ===
+
+ 
+2.2.2 修改配置文件
+ 
+修改application.yml文件，具体配置如下：
+uri以 lb: //开头（lb代表从注册中心获取服务），后面接的就是你需要转发到的服务名称，
+需要与目标项目配置的服务名称一致
+ 
+2.2.3 测试功能
+ 
+进入nacos的注册中心，发现gateway项目也在nacos注册中心注册了。
+    </dependency>
+</dependencies>
+#第二种用法：结合注册中心配置服务，不结合配置中心进行配置使用。
+server:
+  port: 9999
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+    #配置gateway相关信息
+    gateway:
+      routes:
+        - id: order-web-route
+          uri: lb://order-web
+          predicates:
+            - Path=/order-web/**
+          filters:
+            - StripPrefix=1
+        - id: stock-service-route
+          uri: lb://stock-service
+          predicates:
+            - Path=/stock/**
+
+
+
+=== 第 8 页 ===
+
+启动order-web和stock-service项目，然后启动gateway项目，在浏览器中输入http://localhost:9
+999/order-web/order/addOrder请求，查看显示效果，发现请求已经转发到了order-web的控制
+器，并通过控制器远程调用了stock-naocs中的服务。说明网关配置成功了。
+在浏览器中输入http://localhost:9999/stock/getAll请求，发现也直接转发到了stock-nacos项目中
+的控制器，说明网关配置成功了。
+2.3 gateway整合nacos配置中心
+ 
+上述案例中，我们用到了nacos的注册中心，但是当配置信息太多，而且经常变化时，这样的写法
+维护起来会过于复杂，所以我们可以将这些配置保存到nacos配置中心。
+gateway整合nacos注册中心和配置中心的实现步骤如下：
+ 
+2.3.1 添加依赖
+ 
+在gateway项目的pom.xml文件中添加nacos服务注册与配置中心的依赖。
+注意：在引入依赖时，不能引入spring-boot-starter-web的依赖，因为gateway与springmvc不兼
+容。
+如果是通过引用公共模块（common-api）的依赖，则需要将将spring-boot-starter-web排
+除掉
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--添加gateway的依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <!--排除springboot的web支持，因为gateway网关与springmvc不兼容-->
+          <exclusion>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </exclusion>
+            
+            <!--排除掉mybatis-plus，因为网关不用操作数据库-->
+
+
+
+=== 第 9 页 ===
+
+ 
+2.3.2 修改配置文件
+ 
+打开nacos的配置中心，进入配置列表，创建如下配置：
+注意选择dev的命名空间，方便到时候配置的时候找到命名空间的ID
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+
+
+
+=== 第 10 页 ===
+
+上图配置的路由进行具体如下：
+uri以 lb: //开头（lb代表从注册中心获取服务），后面接的就是你需要转发到的服务名
+称，需要与目标项目配置的服务名称一致
+创建bootstrap.yml文件，具体配置如下：
+修改application.yml文件，具体配置如下：
+ 
+2.3.3 测试功能
+ 
+进入nacos的注册中心，发现gateway项目也在nacos注册中心注册了。
+#配置gateway相关信息
+spring:
+  cloud:
+    gateway:
+      routes: #配置路由规则，可以配置多组路由规则
+        - id: order-web-router
+          uri: lb://order-web  
+          predicates:
+            - Path=/order-web/**  
+          filters:
+            - StripPrefix=1
+        - id: stock-service-router
+          uri: lb://stock-service
+          predicates:
+            - Path=/stock/**
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        service: gateway
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: cacef60e-7c71-470d-8633-68bc58f92598
+        file-extension: .yml
+       # group: DEFAULT_GROUP
+      username: nacos
+      password: nacos
+  application:
+    name: com.baidu.gateway.dev
+#第三种用法：结合注册中心，调用服务，结合配置中心，进行路由的配置使用
+#具体使用，请查看bootstrap.yml和配置中心
+server:
+  port: 9999
+
+
+
+=== 第 11 页 ===
+
+启动order-web和stock-service项目，然后启动gateway项目，在浏览器中输入http://localhost:9
+007/order-web/order/addOrder请求，查看显示效果，发现请求已经转发到了order-web的控制
+器，并通过控制器远程调用了stock-service中的服务。说明网关配置成功了。
+在浏览器中输入http://localhost:9999/stock/getAll请求，发现也直接转发到了stock-nacos项目中
+的控制器，说明网关配置成功了。
+ 
+ 
+三、GateWay网关的跨域问题
+ 
+3.1 相关概念
+ 
+3.1.1 什么是跨域
+ 
+跨域问题通常指的是浏览器在执行脚本时，由于同源策略的限制，不能执行其他网站的脚本或访问
+其他网站的资源。以下情况属于跨域问题：
+1. 域名不同：当浏览器尝试从一个域名访问另一个域名的资源时，会出现跨域问题。即使两个
+网站部署在同一台服务器上，只要它们的域名不同，就会触发浏览器的同源策略限制。
+2. 端口不同：同源策略也包括端口号，因此如果浏览器访问的端口号与实际提供资源的端口号
+不同，也会出现跨域问题。
+3. 协议不同：如果协议不同（如http和https），也会出现跨域问题。这是因为浏览器会将不同
+的协议视为不同的源。
+ 
+需要注意的是，跨域问题只会影响浏览器端的JavaScript代码，对于服务端代码来说是不存在
+跨域问题的。因此，如果是服务端代码访问其他服务，是不会受到跨域问题的限制的。
+跨域问题主要是浏览器为了安全考虑而实施的一种限制，它能有效地防止跨站攻击。然而，在实际
+开发中，由于多台服务器之间的交互需求，地址和端口可能不同，因此解决跨域问题成为了前端开
+发中的一个重要任务。
+3.1.2 如何实现跨域
+ 
+
+
+
+=== 第 12 页 ===
+
+所有的微服务是通过网关这个入口，在和前端对接口时，必然涉及到有关跨域的问题（因为前端是
+一个单独的项目，请求要发送到网关，则需要进行跨域处理）。关于服务端跨域有很多方案，可以
+加注解(指定具体的路径允许跨域)，也可以统一配置
+既然是在网关里边来解决跨域问题的，就不能在下流的服务里边再重复引入解决跨域的配置了。否
+则会导致跨域失效。
+3.1.3 通过yml方式配置
+ 
+通过在application.yml文件中进行如下配置来解决跨域问题
+ 
+3.2 实现跨域演示
+ 
+3.2.1 创建前端项目
+ 
+通过vscode创建一个前端项目（mytest），在项目中创建index.html页面，引入jquery，发出
+ajax请求，具体代码如下：
+spring:
+  cloud:
+    gateway:
+      #跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowCredentials: false #取值为false表示不允许携带认证信息，例如不支持
+携带cookie跨域
+            allowedOriginPatterns: "*" #允许跨域的源(网站域名/ip)，设置*为全部
+            allowedHeaders: "*" #允许跨域请求里的head字段，设置*为全部
+            allowedMethods: #允许跨域的method， 默认为GET和OPTIONS，设置*为全部
+              - OPTIONS
+              - GET
+              - POST
+            max-age: 3600 # 跨域允许的有效期
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript" src="/js/jquery-3.7.1.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("button").click(function () {
+                $.ajax({
+                    url: "http://localhost:9999/stock/getAll",
+                    data: {},
+                    type: "post",
+                    dataType: "text",
+                    success: function (data) {
+                        alert("data:" + data);
+                        $("p").html(data);
+                    },
+
+
+
+=== 第 13 页 ===
+
+在浏览器中打开index.html页面，点击按钮，查看F12的控制台，发现如下错误
+出现这个错误的原因是没有处理跨域问题。
+ 
+3.2.2 配置网关跨域
+ 
+修改gateway项目的application.yml文件，添加上跨域处理的配置，代码如下：
+bootstrap.yml文件中已经保存了和nacos相关的注册中心与配置中心的相关信息。
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <button>测试跨域问题</button>
+    <p>原始内容</p>
+</body>
+</html>
+Access to XMLHttpRequest at 'http://localhost:9999/stock/updateStock' from 
+origin 'http://localhost:63343' has been blocked by CORS policy: No 'Access-
+Control-Allow-Origin' header is present on the requested resource.jquery-
+1.8.3.js:8434          
+POST http://localhost:9999/stock/updateStock net::ERR_FAILED 403
+server:
+  port: 9999
+spring:
+  cloud:
+    gateway:
+      #跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowCredentials: false #取值为false表示不允许携带认证信息，例如不支持
+携带cookie跨域
+            allowedOriginPatterns: "*" #允许跨域的源(网站域名/ip)，设置*为全部
+            allowedHeaders: "*" #允许跨域请求里的head字段，设置*为全部
+            allowedMethods: #允许跨域的method， 默认为GET和OPTIONS，设置*为全部
+              - OPTIONS
+              - GET
+              - POST
+            max-age: 3600 # 跨域允许的有效期
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+
+
+=== 第 14 页 ===
+
+如果使用的是注册中心结合配置中心进行配置，则配置中心的配置信息如下：
+ 
+3.2.3 测试功能
+ 
+启动stock-service项目和gateway项目，然后运行index.html页面，点击跨域处理暗流，查看页面
+显示效果，说明跨域处理生效了。
+四、GateWay整合Sentinel
+ 
+网关作为内部系统外的一层屏障，对内起到了一定的保护作用，限流便是其中之一，网关层的限流
+可以简单地针对不同路由进行限流，也可以针对业务的接口进行限流，或者根据接口的特征分布限
+流。
+具体可参考网站：https://github.com/alibaba/Sentinel/wiki/网关限流
+ 
+4.1 实现网关整合sentinel
+ 
+4.1.1 添加依赖
+ 
+在gateway项目中添加如下依赖：
+        service: gateway
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: cacef60e-7c71-470d-8633-68bc58f92598
+        file-extension: .yml
+       # group: DEFAULT_GROUP
+      username: nacos
+      password: nacos
+  application:
+    name: com.baidu.gateway.dev
+spring:
+  cloud:
+    gateway:
+      routes: #配置路由规则，可以配置多组路由规则
+        - id: order-web-router
+          uri: lb://order-web  
+          predicates:
+            - Path=/order-web/**  
+          filters:
+            - StripPrefix=1
+        - id: stock-service-router
+          uri: lb://stock-service
+          predicates:
+            - Path=/stock/**
+
+
+
+=== 第 15 页 ===
+
+gateway项目中pom.xml文件完整的配置
+<!--添加sentinel的依赖-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+<!--添加gateway整合sentinel的依赖-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-alibaba-sentinel-gateway</artifactId>
+</dependency>
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--添加gateway的依赖-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+    <!--添加sentinel的依赖-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+    </dependency>
+    <!--添加gateway整合sentinel的依赖-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-alibaba-sentinel-gateway</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <!--排除springboot的web支持，因为gateway网关与springmvc不兼容-->
+            <exclusion>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </exclusion>
+            
+            <!--排除掉mybatis-plus，因为网关不用操作数据库-->
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+
+
+
+=== 第 16 页 ===
+
+ 
+4.1.2 添加配置
+ 
+在application.yml中添加sentinel地址的配置，具体如下：
+gateway项目application.yml文件完整配置如下：
+具体的路由配置已经保存到配置中心，读取配置中心的信息已经保存到bootstrap.yml文件
+中。
+ 
+4.1.3 测试整合结果
+ 
+完成上述配置以后，重启gateway网关，在浏览器中输入http://localhost:8888，进入sentinel控
+制台，在浏览器中输入http://localhost:9999/stock/geAll请求，可以在sentinel控制台中看到
+stock-service-router路由，结果如下，说明gateway与sentinel整合成功。
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+spring:
+  cloud:
+    sentinel:
+      transport:
+        #配置sentinel地址
+        dashboard: 127.0.0.1:8888
+server:
+  port: 9999
+spring:
+  cloud:
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8888
+    gateway:
+      #跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowCredentials: false #取值为false表示不允许携带认证信息，例如不支持
+携带cookie跨域
+            allowedOriginPatterns: "*" #允许跨域的源(网站域名/ip)，设置*为全部
+            allowedHeaders: "*" #允许跨域请求里的head字段，设置*为全部
+            allowedMethods: #允许跨域的method， 默认为GET和OPTIONS，设置*为全部
+              - OPTIONS
+              - GET
+              - POST
+            max-age: 3600 # 跨域允许的有效期
+
+
+
+=== 第 17 页 ===
+
+ 
+4.2 流控规则详解
+ 
+进入sentinel的请求链路，选择stock-service-router，配置流控，可以查看到如下界面：
+间隔：以前使用sentinel进行流控时，默认都是1秒钟，这里可以设置间隔时间，根据实际情况的
+需要进行设置。
+Burst size：表示宽容次数，例如QPS配置为2，间隔为1，Burst size配置为1，则表示在一秒请求
+达到三次以上才会限流。
+针对请求属性：将针对请求属性勾选以后可以看到下面出现了参数属性。这些属性其实就是前面的
+断言工厂，所以这里可以配置针对断言工厂的限流。
+Client IP：表示针对IP进行流控配置
+
+
+
+=== 第 18 页 ===
+
+Remote Host：表示针对远程域名进行配置
+Header：表示针对请求头部进行配置
+URL参数：表示针对URL地址中传递的参数进行限流
+Cookie：表示针对指定cookie进行限流。
+属性值匹配：勾选属性匹配以后会打开匹配模式的取值，这是辅助参数属性来进行的。可以先选择
+参数属性，然后在属性值匹配中再来进行辅助补充。
+匹配模式：取值有精确，字串，正则，匹配串
+精确：表示对于参数属性的选择，进行精确匹配，在匹配串中填写精确值
+字串：只要前面匹配成功，后面就是模糊匹配
+正则：匹配正则表达式
+4.3 设置流控规则
+ 
+4.3.1 设置QPS流控
+ 
+设置QPS的取值为2，表示每秒接收2个请求（如果再配置间隔为2，表示两秒中内能接收2个请
+求）配置如下：
+快速在浏览器中刷新http://localhost:9999/stock/getAll请求（达到每秒2次以上），发现结果被
+流控了。
+
+
+
+=== 第 19 页 ===
+
+4.3.2 设置精确匹配流控
+ 
+配置流控规则如下，注意需要指定具体的IP地址。
+这个配置表示针对IP地址的精确匹配，ip地址为127.0.0.1，要求在两秒内可以接收三个请
+求，超出了就实行流控
+ 
+启动gateway项目和stock-nacos项目，在浏览器中输入http://127.0.0.1:9999/stock/getAll请求，
+并且保证在两秒内至少刷新四次，查看结果如下：
+注意：如果请求改为http://localhost:9999/stock/getAll，则无论刷新多少次都不会被流控。
+这是因为请求地址是localhost，而我们实施的流控规则是针对具体IP地址的。
+
+
+
+=== 第 20 页 ===
+
+ 
+4.3.3 设置URL请求参数流控
+ 
+注意：这里的请求参数流控，需要用常规方式进行发送参数，不能使用restfull风格发送参数。
+注意：现在是对消费者（order-web项目）进行流控配置。
+ 
+在浏览器中输入http://localhost:9999/order-web/order/getOrderByStockId?stockId=1请求，注
+意携带参数id=1,查看页面结果如下：
+
+
+
+=== 第 21 页 ===
+
+多次刷新（每秒至少刷新三次），查看结果如下：说明已经被流控了。
+ 
+ 
+ 
+
+
+
+
+=== 微服务阿里巴巴课程12：nginx应用.pdf ===
+=== 第 1 页 ===
+
+微服务阿里巴巴课程12：nginx应用
+ 
+一、配置网关，搭建集群
+ 
+通过复制项目的方式或者创建新项目的方式，配置三台网关，从而组成集群。
+注意：建立网关集群的方式与建立服务提供者集群的方式类似，都不需要彼此之间通讯，但
+是需要保证服务名称一致。
+通过访问网关（不同的网关，端口不一样）,发送请求，查看结果：例如访问：http://localhost:99
+99/order-web/order/addOrder
+用同样的方式检查另外两个网关是否正确
+二、安装并配置nginx
+ 
+这里在windows环境下，使用nginx反向代理服务器，实现通过nginx将请求转发到网关，通过网
+关将请求转发到服务消费者，通过消费者调用服务提供者集群，最终将结果响应给用户。
+1、解压nginx
+ 
+将nginx-1.18.0.zip解压到硬盘指定位置，文件结构如下：
+
+
+
+=== 第 2 页 ===
+
+2、配置nginx.conf
+ 
+进入nginx的conf/nginx.conf目录，将配置信息调整如下：
+注意：这里访问nginx服务器的端口设置的是10000（注意：有些人用10000端口可能无法正
+常发送请求，此时可以换一个端口，例如换成10001试试）.
+注意：如果这里配置的localhost无法识别，则使用127.0.0.1
+注意：每一行结束的时候必须带上分号，键与值之间可以只要一个空格键的距离
+    #配置内部服务器列表
+    upstream myList{
+        server localhost:9997;
+        server localhost:9998;
+        server localhost:9999;
+        ip_hash;  #负载均衡策略使用ip地址的hash策略
+    }
+    
+    server {
+        listen       10000;
+        server_name  localhost;
+        location / {
+            root   html;
+            index  index.html index.htm;
+            proxy_pass http://myList;
+        }
+        。。。。。。。。。。。。。。
+    }
+
+
+
+=== 第 3 页 ===
+
+  
+ 
+3、启动nginx
+ 
+进入nginx安装路径，找到nginx.exe文件所在路径。进入cmd，通过start  nginx.exe命令启动
+nginx
+使用命令行启动 start nginx.exe
+启动以后会有一个一闪而过的效果
+不要直接双击nginx.exe，这样会导致修改配置后重启、停止nginx无效，需要手动关闭任务
+管理器内的所有nginx进程
+在浏览器中输入http://localhost，查看运行结果
+4、测试实现
+ 
+在浏览器中输入http://localhost:10001/order-web/order/addOrder请求，通过刷新页面，发现
+请求通过nginx代理服务器，都已经正常跳转到了网关，并获取到了响应。
+ 
+ 
+
+
+

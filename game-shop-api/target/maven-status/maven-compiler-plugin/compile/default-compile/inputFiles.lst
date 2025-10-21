@@ -1,0 +1,9 @@
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\product\ProductFeignClient.java
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\payment\PaymentFeignClient.java
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\user\UserFeignClient.java
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\user\dto\UserDTO.java
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\payment\dto\PaymentDTO.java
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\shop\ShopFeignClient.java
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\payment\CreatePaymentRequest.java
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\shop\dto\ShopDTO.java
+D:\ai\game-shop-cloud\game-shop-api\src\main\java\com\baidu\api\product\dto\ProductDTO.java

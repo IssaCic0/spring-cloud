@@ -1,0 +1,297 @@
+=== 第 1 页 ===
+
+微服务阿里巴巴课程04：feign用法
+ 
+一、feign的用法
+ 
+1.1、feign基本概念
+ 
+什么是feign:
+feign是netflix开发的声明式、模板化的http客户端。feign可以帮助我们更便捷、优雅的调用
+HTTP API.
+feign支持多种注解，例如feign自带的注解或者JAX-RS注解等（在spring cloud alibaba中，
+我们统统都不用了）。
+feign是使用在消费端的，当然提供端也可能是消费端。（调用方是消费端，被调用方是提供
+端）
+spring cloud openfeign对feign进行了增强，使其支持springmvc注解，另外还整合了
+LoadBalancer和Nacos，从而使feign的使用更加方便
+我们实际上用的是OpenFeign。
+ 
+1.2、项目整合OpenFeign
+ 
+1.2.1、创建项目
+ 
+创建一个不带任何模板的maven项目(openfeign-web)，该项目继承springcloud-parent。
+创建步骤这里就不写了，大家也应该很熟悉了。
+1.2.2、配置pom.xml
+ 
+和其他的消费者一样配置相关依赖，注意：我们这里需要添加上openfeign的依赖。
+我们在公共模块中已经添加了openfeign依赖，所以当前项目只需要引入公共模块的依赖就
+可以了。
+<!--支持openfeign的依赖-->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+
+
+=== 第 2 页 ===
+
+ 
+1.2.3、编写配置文件
+ 
+在template目录下创建bootstrap.yml文件，并进行如下配置：
+ 
+1.2.4、创建启动器
+ 
+在main/java目录下创建com.baidu包，然后在该下创建启动器OpenFeignApplication8002
+需要添加使openfeign生效的注解@EnableFeignClients
+    <artifactId>openfeign-web</artifactId>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+   <dependencies>
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <!--排除mybatis-plus的依赖-->
+            <exclusions>
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>mybatis-plus-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>
+server:
+  port: 8002
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: openfeign-web
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+=== 第 3 页 ===
+
+ 
+1.2.5 创建feign接口
+ 
+在com.baidu包下创建feign包，在该包中创建接口StockFeignService（接口名称需要和提供者控
+制器的首单词名称相同）。
+接口中方法的写法很简单：就是提供者控制器中处理请求的方法，保留所有注解，方法名，
+参数等，只要去掉方法体即可。
+feign接口不需要写实现类，具体实现是框架通过动态代理实现的。
+@FeignClient(value="stock-service",path = "/stock")
+该注解用于标注该接口是feign的客户端，value取值就是服务提供者注册的服务名称。
+如果服务提供者控制器头部有总体匹配的注解，则需要配置path指定对应的请求名称，
+如果提供者没有总体匹配，则不需要添加path。
+注意：如果需要使用restfull风格发送参数给服务提供者，则无论变量名与｛变量名｝
+是否同名，在@PathVariable中必须指定名称。例如：
+getById(@PathVariable("id") Integer id)，否则会出现如下异常：
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+@SpringBootApplication
+@EnableFeignClients
+public class OpenFeignApplication8002 {
+    public static void main(String[] args) {
+        SpringApplication.run(OpenFeignApplication8002.class,args);
+    }
+}
+Caused by: java.lang.IllegalStateException: PathVariable annotation 
+was empty on param 0.
+package com.baidu.feign;
+import com.baidu.pojo.Stock;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+@FeignClient(value = "stock-service",path = "/stock")
+public interface StockFeignService {
+    @RequestMapping("/testCluster")
+    public String testCluster();
+    //查询所有库存库存信息
+    @RequestMapping("/getAll")
+    public List<Stock> getAll();
+
+
+
+=== 第 4 页 ===
+
+ 
+1.2.6、创建控制器
+ 
+在com.baidu包下创建controller包，并在该包下创建OrderFeignController类作为控制器。
+在控制器中自动注入feign的接口，在处理匹配请求的方法中调用feign接口的方法，实现调用
+提供者。
+    //根据id查询指定的库存信息
+    @RequestMapping("/getStockById/{id}")
+    public Stock getStockById(@PathVariable("id") Integer id);
+    //根据id修改指定商品的库存信息
+    @PostMapping("/updateStockById")
+    public boolean updateStockById(@RequestBody Stock stock);
+}
+package com.baidu.controller;
+import com.baidu.feign.StockFeignService;
+import com.baidu.pojo.Stock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+@RestController
+@RequestMapping("/feign")
+public class OrderFeignController {
+    @Autowired
+    private StockFeignService feignService;
+    //测服务消费者调用服务提供者集群,测试负载均衡策略
+    @RequestMapping("/test")
+    public String test(){
+        System.out.println("------test-------");
+        //执行远程调用
+        String res=feignService.testCluster();
+        return "消费者调用成功，"+res;
+    }
+    //添加订单
+    @RequestMapping("/addOrder")
+    public String addOrder(){
+        System.out.println("-------addOrder------");
+        //远程调用，查询所有库存信息
+        List<Stock> list=feignService.getAll();
+        return "添加订单成功，所有库存信息是："+list;
+    }
+
+
+
+=== 第 5 页 ===
+
+ 
+1.2.7、测试功能
+ 
+首先启动nacos注册中心，然后启动三个提供者，最后启动消费者（openfeign-web），在浏览器
+中输入请求，查看运行结果，多次刷新，查看结果，发现openfeign默认使用的也是轮询策略。
+测试根据id查询指定商品库存，用于测试restfull风格进行远程调用。
+二、2022feign实现负载均衡
+ 
+feign其实不是做负载均衡的，负载均衡是LoadBalancer的功能，feign只是集成了LoadBalancer
+而已，但是负载均衡的功能还是feign内置的LoadBalancer在做，而不是feign。
+feign的作用替代了RestTemplate，性能比较低，但是可以使代码可读性很强。
+在没有配置负载均衡的情况下，feign默认使用的是轮询策略。
+ 
+    //下订单时，根据id查询指定的库存信息
+    @RequestMapping("/getOrderByStockId")
+    public String getOrderByStockId(Integer stockId){ //这里的id表示的是商品库存主键
+        System.out.println("------getOrderByStockId-------");
+        System.out.println("stockId:"+stockId);
+        //远程调用，实现根据id查询指定的库存信息
+        Stock stock=feignService.getStockById(stockId);
+        return "查询订单成功，库存是："+stock;
+    }
+    //修改订单，修改商品库存信息
+    @RequestMapping("upateOrderById")
+    public String upateOrderById(){
+        System.out.println("-----upateOrderById-------");
+        //创建一个Stock对象，表示需要修改的库存
+        Stock stock=new Stock(1,null,8);
+        //远程调用，执行修改商品库存信息
+        boolean flag=feignService.updateStockById(stock);
+        return "修改订单结果由flag决定，flag="+flag;
+    }
+}
+
+
+
+=== 第 6 页 ===
+
+2.1 配置权重策略
+ 
+与之前实现权重策略一样，在消费者(openfeign-web)中创建com.baidu.config包，并在该包下配
+置权重策略的配置类。
+ 
+2.2 修改启动器
+ 
+修改openfeign-web项目的启动器，添加负载均衡策略的注解，具体代码如下：
+package com.baidu.config;
+import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
+import com.alibaba.cloud.nacos.loadbalancer.NacosLoadBalancer;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.loadbalancer.core.ReactorLoadBalancer;
+import 
+org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
+import 
+org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+public class NacosLoadBalancerConfig {
+    @Resource //这里只能用@Resource注入，不能用@Autowired注入
+    private NacosDiscoveryProperties nacosDiscoveryProperties;
+    @Bean
+    public ReactorLoadBalancer<ServiceInstance> getBalancer(Environment env,
+                                                           
+ LoadBalancerClientFactory factory){
+        System.out.println("nacosDiscoveryProperties--------
+"+nacosDiscoveryProperties);
+        //获取付提供者的服务名称
+        String name=env.getProperty(factory.PROPERTY_NAME);
+        //获取ObjectProvider对象
+        ObjectProvider<ServiceInstanceListSupplier> provider = 
+factory.getLazyProvider(name,ServiceInstanceListSupplier.class);
+        //返回NacosLoadBalancer对象
+        return new NacosLoadBalancer(provider,name, 
+nacosDiscoveryProperties);
+    }
+}
+package com.baidu;
+import com.baidu.config.NacosLoadBalancerConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+
+
+=== 第 7 页 ===
+
+ 
+2.3 测试功能
+ 
+重启openfeign-web项目，在浏览器中输入：http://localhost:8002/feign/test，多次刷新该地
+址，发现9003被访问的次数最多，9001被访问的次数最少。
+import 
+org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+@SpringBootApplication
+@EnableFeignClients
+@LoadBalancerClients(defaultConfiguration = NacosLoadBalancerConfig.class)
+public class OpenFeignApplication8002 {
+    public static void main(String[] args) {
+        SpringApplication.run(OpenFeignApplication8002.class,args);
+    }
+}
+
+

@@ -1,0 +1,927 @@
+=== 第 1 页 ===
+
+微服务阿里巴巴01: 微服务概述
+ 
+ 
+一、开发架构简介
+ 
+随着互联网的发展，网站应用的规模也在不断的扩大，进而导致系统架构也在不断的更新，从互联
+网早期到现在，系统架构经历了如下几个过程：单体应用架构-->垂直应用架构-->分布式架构--
+>SOA架构-->微服务架构，如下进行简单介绍：
+ 
+1.1、单体应用架构
+ 
+互联网早期，一般的网站应用流量较小，只需一个应用，将所有功能代码都部署在一起就可以，这
+样可以减少开发，部署和维护的成本。
+例如：电商项目，里面会包含很多用户管理，商品管理，订单管理，物流管理等功能模块，我们把
+这些功能模块做成一个web项目，然后部署到一台服务器上运行就可以了，
+优点：
+项目架构简单，开发正本低
+项目部署在一台服务器上，维护方便
+缺点：
+全部功能集成在一个项目中，对于大型项目而言不易开发和维护
+项目模块之间耦合度高，单点容错率低。
+无法针对不同模块进行针对性优化和水平扩展
+ 
+1.2、垂直应用架构
+ 
+随着访问量的逐渐增大，单体应用只能依靠增加节点来应对，但是这时候会发现并不是所有的模块
+都会有比较大的访问量。
+例如：还是以上面的案例为例，用户访问量的增加可能影响的只是用户的订单模块，但是对消息模
+块的影响可能比较小，那么此时我们希望只多增加几个订单模块，而不增加消息模块，此时单体应
+用就做不到了，垂直应用也就以你应运而生了。
+所谓的垂直应用架构，就是将原来的一个应用拆分成了几个互不相干的应用，以提升效率。例如我
+们可以 将上面的电商的单体应用拆分成：
+电商系统（用户管理，商品管理，订单管理）
+后台系统（用户管理，订单管理，客户管理）
+CMS系统（广告管理，营销管理）
+
+
+
+=== 第 2 页 ===
+
+这样分解完毕以后，当出现用户访问量变大，只需要增加电商系统的节点，就可以了，而无需增加
+后台和CMS的节点。
+优点：
+系统拆分实现了流量分但，解决了并发问题，而且可以针对不同模块进行优化和水平扩展
+一个系统的问题不会影响到其他系统，提高了容错性
+缺点
+系统之间相互独立，无法进行相互调用
+系统之间相互独立，会又触发开发任务
+ 
+1.3、分布式架构
+ 
+当垂直应用越来越多，重复的业务代码就会越来越多，这时候，我们就思考可不可以将重复的代码
+抽取出来，做成统一的业务层作为独立的服务，然后由前端控制层调用不同的业务层服务？这就产
+生了新的分布式系统架构，它将把工程拆分成表现层和服务层两部分，服务层中包含业务逻辑。表
+现层只需要处理 和页面的交互，业务逻辑都是调用服务层的服务来实现。
+优点：
+抽取公共的功能为服务层，提高代码复用性
+缺点：
+系统间耦合度变高，调用关系错综复杂，难以维护。
+ 
+1.4、SOA架构
+ 
+在分布式架构下，当服务越来越多，容量的评估，小服务资源的浪费等问题逐渐显现，此时需要增
+加一个调度中心堆集群进行实时管理，此时，用于资源调度和治理中心（SOA :service Oriented 
+Architecture)是关键。
+优点：
+使用治理中心（ESB|dubbo）解决了服务间调用关系的自动调节
+缺点
+服务间会有依赖关系，一旦某个环节出错会影响较大（服务雪崩）
+服务关系复杂，运维，测试，部署等都比较困难。
+ 
+1.5、微服务架构
+ 
+微服务架构在某种程度上是面向服务的架构SOA的继续发展，它更加强调服务的"彻底拆分"。
+微服务架构与SOA架构的不同之处：
+微服务架构比SOA架构粒度会更加精细，让专业的人去做专业的事情，目的在于提高效率，
+每个服务与服务之间互不影响。微服务架构中，每个服务必须独立部署，微服务架构更加轻
+巧，轻量级。
+SOA架构中可能数据库存储会发生共享，微服务强调每个服务都是单独的数据库，保证每个
+服务与服务之间互不影响。
+项目体现特征微服务架构比SOA架构更加适合于物联网公司敏捷开发，快速迭代版本，因为
+粒度非常长精细。
+优点：
+原子化拆分，独立打包、部署和升级，保证每个微服务清晰的任务划分，利于扩展。
+
+
+
+=== 第 3 页 ===
+
+微服务之间采用Restfull等轻量级http协议相互调用。
+缺点：
+分布式系统开发的技术成本高（容错，分布式事务等）
+复杂性更高，各个微服务进行分布式独立部署，当进行模块调用的时候，分布式将会变得更
+加麻烦。
+ 
+二、微服务架构介绍
+ 
+2.1、基本概念
+ 
+    微服务其实是一种架构风格，我们在开发一个应用的时候，这个应用应该是由一组小型服务组成，每
+个小型服务都运行在自己的服务器上，小型服务之间采用Restfull等轻量级http协议相互调用。
+2.2、微服务架构常见问题
+ 
+一旦采用微服务架构开发系统，就势必会遇到如下几个问题：
+这么多小服务，如何管理他们？
+（注册中心【服务注册，发现，删除】）。
+这么多小服务，他们之间如何通讯？
+必须遵守http协议，传参数的时候，必须使用restfull风格，可以通过RestTemplate和
+openfeign接口实现远程调用
+这么多小服务，客户端怎么访问他们？
+网关（geteway）
+这么多小服务，一旦出现问题，应该如何处理   
+容错机制（sentinel：流控，降级服务），例如：C（用户）-->A（服务消费者，设置流
+控与降级）--->B(服务提供者)
+这么多小服务，一旦出现问题，应该如何排错
+链路追踪（skywalking）
+对于上面的问题，是任何一个微服务设计者都不能绕过去的，因此大部分的微服务产品都针对每一
+个问题提供了相应的组件来解决它们。
+
+
+
+=== 第 4 页 ===
+
+ 
+2.3、常见的微服务架构
+ 
+dubbo：zookeeper+dubbo+springboot
+配套的通讯方式：RPC
+注册中心：zookeeper
+配置中心：diamond
+SpringCloud：全家桶+轻松嵌入第三方组件(Netflix），该方式已经闭源了，不再更新了。
+配套通讯方式：http  restful
+注册中心：eureka
+配置中心：config
+断路器：hystrix
+网关：zuul
+分布式追踪系统：sleuth+zipkin
+SpringCloud Alibaba，这是目前的主流微服务架构。
+spring cloud以微服务为核心的分布式系统构建标准
+配套通讯方式：http  restful
+注册中心：nacos
+配置中心：nacos
+容错机制：sentinel
+分布式事务：seata
+链路追踪：skywalking
+网关：GetWay
+ 
+2.4、spring cloud alibaba介绍
+ 
+spring cloud alibaba致力于提供微服务开发的一站式解决方案，此项目包含开发微服务架构的必
+须组件，方便开发者通过spring cloud变成模型轻松使用这些组件来开发微服务架构。
+依托spring cloud alibaba，你只需要添加一些注解和少量配置，就可以将spring cloud应用接入
+案例分布式应用解决方案，通过阿里中间件来迅速搭建分布式应用系统。
+
+
+
+=== 第 5 页 ===
+
+ 
+2.5、spring cloud各套实现对比
+ 
+ 
+三、微服务环境搭建
+ 
+3.1 版本约束关系
+ 
+Spring Cloud与SpringBoot, Spring Cloud Alibaba版本兼容
+适配 Spring Boot 3.0.2，Spring Cloud 2022.x 版本及以上的 Spring Cloud Alibaba 版本：
+Spring Cloud Alibaba 组件版本关系(nacos2.2.1版本有问题，我们实际使用的是2.2.2版本)
+ 
+
+
+
+=== 第 6 页 ===
+
+3.2、搭建nacos注册中心
+ 
+3,2,1、基本概念
+ 
+nacos是一个集服务发现（nacos  discovery），服务配置（nacos  config）和服务管理的平台。
+也就是说nacos是一个集注册中心，配置中心以及服务管理的平台
+注册中心：负责服务的注册，拉取注册列表等功能，用于实现提供者和消费者协调工作
+配置中心：用于将application.yml配置文件中的公共配置集合起来，统一配置。
+服务管理平台：提供管理界面，供可视化的管理与配置。
+nacos的关键特性包括：
+服务发现和服务健康检测
+服务发现：发现可用服务，并注册到注册列表中。
+服务健康检查：通过心跳机制检查已经注册的各个服务是否正常。
+服务及其元数据管理
+服务的元数据主要是指：注册服务时的服务名称，服务的远程IP地址，端口，状态等。
+3.3.2、nacos注册中心
+ 
+nacos注册中心负责管理所有微服务，解决微服务之间调用关系错综复杂，难以维护的问题。
+ 
+ 
+3.2.3、nacos核心功能
+ 
+服务注册：nacos client会通过发送请求的方式向nacos server注册自己的服务，提供自生的元数
+据，比如服务名称，IP地址，端口等信息。nacos server接收到注册请求后，就会把这些元数据信
+息存储在一个注册列表中。
+服务心跳：在服务注册后，nacos client会维护一个定时心跳来定时通知nacos server，说明服务
+一直处于可用状态，防止被删除，默认5秒发送一次心跳。
+服务同步：nacos server集群之间会互相同步服务实例，用来保证服务信息的一致性。
+服务发现：服务消费者（nacos client）在调用服务提供者的服务时，会发送一个rest请求给
+nacos server，获取上面注册的服务列表，并且缓存在nacos client本地，同时会在nacos client本
+地开启一个定时任务，定时拉取服务端最新的注册列表信息更新到本地缓存。
+
+
+
+=== 第 7 页 ===
+
+服务健康检查：nacos server会开启一个定时任务用来检查注册服务实例的健康情况，对于超过
+15秒没有收到客户端心跳的实例会将它的健康状态属性设置为false(客户端服务发现是不会发现)，
+如果某个实例超过30秒没有收到心跳，则直接删除该实例（被删除的实例如果回复发送心跳则会
+重新注册）。
+主流的注册中心的比较
+ 
+3.2.4、安装nacos注册中心
+ 
+3.2.4.1 下载nacos服务端
+ 
+下载nacos注册中心
+因为spring cloud alibaba使用的版本是2022.0.0.RC2，对于的nacos版本为2.2.2版本。所以
+需要下载该版本。
+下载地址：https://github.com/alibaba/Nacos/releases，需要下载的软件：nacos-
+server-2.2.2.zip
+解压下载的nacos-server-2.2.2.zip文件，查看文件结构：
+ 
+3.2.4.2 修改配置
+ 
+
+
+
+=== 第 8 页 ===
+
+nacos默认是集群模式，所以需要调整成单机模式，只需要修改bin目录下的startup.cmd文件
+右键点击startup.cmd文件，选择使用notepad++打开，然后将set mode="cluster"修改成
+standalone即可。
+3.2.4.3 启动nacos服务端
+ 
+修改完成以后，可以进入bin目录，点击startup.cmd启动
+出现下面界面如果卡住了，注意按一下回车键。
+启动完成以后可以根据这里提到的http://192.168.217.1:8848/nacos/index.html访问
+nacos。
+当最后出现Nacos started successfully in stand alone mode。use embedded storage
+时，才表示nacos正常启动了。
+ 
+在浏览器中输入：http://192.168.217.1:8848/nacos/index.html地址查看nacos首页
+也可以用http://localhost:8848/nacos/index.html访问首页。
+
+
+
+=== 第 9 页 ===
+
+注入用户名和密码（都是nacos），进行登录
+ 
+3.2.4.4 启动nacos失败问题
+ 
+nacos启动有时候会遇到直接闪退或者无法启动的问题，此时主要有如下三种可能原因
+1、nacos的解压路径中有中文或者特殊符号
+2、JDK要求17及以上版本，并且需要配置环境变量JAVA_HOME和path.
+3、可能安装了虚拟机，导致启动的时候找到的是虚拟机的IP地址。
+如果出现启动nacos时闪退，又看不到具体的错误提示信息，可以进入cmd，通过startup.cmd -m 
+standalone命令启动。
+3.4、搭建项目
+ 
+3.4.1 springboot3.0.2版本组合
+ 
+JDK版本：17
+MYSQL数据库版本：8.0/5.7以上
+
+
+
+=== 第 10 页 ===
+
+SpringBoot使用版本：3.0.2
+Spring Cloud版本：2022.0.0
+Spring Cloud alibaba版本：2022.0.0.0-RC2
+maven:3.8.1
+3.4.2、创建父项目
+ 
+3.4.2.1 创建父项目
+ 
+在idea2023版本中创建一个普通的maven项目，项目命名springcloud-parent。
+项目创建完成以后，可以考虑删除src包以及该包下所有文件，只需要保留pom.xml文件即
+可。
+ 
+配置pom.xml文件
+注意配置springboot，springcloud，spring cloud alibaba的版本问题，对于这几个包需要
+做版本锁定，当在子项目中运用这些技术的依赖包时就会自动根据锁定的版本查找匹配的目
+标版本。
+在此项目中加上pom，否则项目都无法打包。
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.baidu</groupId>
+    <artifactId>springcloud-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+
+
+=== 第 11 页 ===
+
+ 
+ 
+3.5、搭建nacos客户端
+ 
+3.5.1 创建公共模块
+ 
+注意：如果存在较多的项目需要用到相同的依赖和相同的实体类，此时可以在父项目
+（springcloud-parent）中创建一个公共模块（common-api）用于保存公共的依赖和实体类，
+此时只需要提供者和消费者引用该模块（common-api）即可。
+    <properties>
+            <maven.compiler.source>17</maven.compiler.source>
+            <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+    <!--添加版本锁定-->
+    <dependencyManagement>
+        <!--锁定springboot版本为3.0.2-->
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>3.0.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!--锁定springcloud版本为2022.0.0-->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2022.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!--锁定spring cloud alibaba 版本为2022.0.0.0-RC2-->
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>2022.0.0.0-RC2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
+
+
+
+=== 第 12 页 ===
+
+ 
+在公共模块中配置公共依赖：
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>common-api</artifactId>
+    <!--配置公共依赖-->
+    <dependencies>
+        
+         <!--引入bootstrap的依赖-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+        </dependency>
+        
+        
+        <!--添加springboot的web支持-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+
+
+=== 第 13 页 ===
+
+3.5.2、创建order-web项目
+ 
+创建一个空的maven项目(order-web)，该项目继承父项目，表示消费者，用于处理用户从页面发
+出的订单请求
+        <!--添加nacos服务注册发现-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-
+discovery</artifactId>
+        </dependency>
+        <!--引入nacos的服务配置中心-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+        </dependency>
+        
+        <!--支持feign，用于进行远程调用-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        
+        <!--添加负载均衡的依赖,2022以后的版本需要单独配置-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+    </dependencies>
+</project>
+
+
+
+=== 第 14 页 ===
+
+ 
+修改pom.xml文件
+一定要添加nacos服务注册发现的依赖包，只有添加了这个包，当启动项目的时候才会去注
+册中心注册。
+添加config包是因为有很多关于nacos的配置，我们可以不用在项目中配置，而直接配置到nacos
+配置中心。
+spring-cloud-starter-alibaba-nacos-discovery已经集成了ribbon，所以这里不需要配置
+ribbon。
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>order-web</artifactId>
+    <dependencies>
+        <!--引入公共模块-->
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+
+
+=== 第 15 页 ===
+
+ 
+修改全局配置文件application.yml，在resources目录下创建一个application.yml文件，并进行如
+下配置
+配置在nacos注册中心中的服务名称可以通过spring.cloud.nacos.discovery.service进行配
+置，如果不配置则默认使用spring.application.name的名称作为服务名称。
+在配置应用名称spring.application.name时，名称取值不要用下划线的横杠，这样可能
+无法识别。
+spring.cloud.nacos.discovery.server-addr表示服务注册的位置
+spring.main.allow-bean-definition-overriding: true 表示支持配置bean的覆盖。
+当在openfeign进行远程调用服务提供者的时候，如果出现同一个服务提供者中创建了
+多个控制器，而服务名称相同，测试在进行远程调用是会出现如下错误，此时可以通过
+配置支持bean的覆盖来解决该异常。该配置应该写在服务消费者中，而不是服务提供
+者中。
+ 
+配置启动类
+在java目录下创建com.baidu包，并在该包下创建springboot的启动类
+注意：因为父项目的groudId取值是com.baidu，所以子项目的启动器所在的包必须是
+com.baidu，否则启动项目时会出现如下错误，这是因为在加载springboot启动器时，
+系统没有扫描到指定的启动器的原因。
+</project>
+The bean 'product-service.FeignClientSpecification' could not be 
+registered. A bean with that name has already been defined and 
+overriding is disabled.
+Action:
+Consider renaming one of the beans or enabling overriding by setting 
+spring.main.allow-bean-definition-overriding=true
+server:
+  port: 8001
+  tomcat:
+    uri-encoding: utf-8
+spring:
+  application:
+    name: order-web
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  main:
+    allow-bean-definition-overriding: true      
+Consider defining a bean of type 
+'com.netflix.client.config.IClientConfig' in your configuration.
+
+
+
+=== 第 16 页 ===
+
+ 
+3.5.3、创建stock-service项目
+ 
+该项目表示提供者，用于访问数据库（对数据库进行crud操作），提供数据给消费者使用。
+第一种方式：
+用如上创建order-web项目的方式创建本项目，基本配置也是一样的，需要调整一下内容：
+配置pom.xml文件，引入依赖
+配置全局配置文件（application.yml）
+配置springboot的启动类
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class OrderWebApplication8001 {
+    public static void main(String[] args) {
+        SpringApplication.run(OrderWebApplication8001.class, args);
+    }
+}
+<dependencies>
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+server:
+  port: 9001
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+
+
+=== 第 17 页 ===
+
+ 
+第二种方式：
+可以复制order-web项目，然后粘贴，导入进去（导入的时候注意修改项目名为stock-
+service），此时除了需要修改上面注意修改的内容以外还需要做如下调整：
+删除多余的order-web.iml文件。
+修改order-web的artifactId（order-web）
+将此结果改成stock-service，取值是项目名称
+在父项目的pom.xml文件中添加一个mudel，将这里的artifactId名称配置进去，表示该
+项目归父项目管理
+3.5.4、Nacos客户端更多配置
+ 
+这里列举了一些常用的配置，还有一些其他用法，这里就不列举了。
+ 
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import 
+org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class StockServiceApplication9001 {
+    public static void main(String[] args) {
+       
+ SpringApplication.run(StockServiceApplication9001.class,args);
+    }
+}
+<modules>
+    <module>order-web</module>
+    <module>stock-service</module>
+</modules>
+
+
+
+=== 第 18 页 ===
+
+ 
+3.6、测试nacos客户端注册
+ 
+先启动nacos服务端，然后再启动order-web和stock-service项目，进入http://localhost:8848/na
+cos/index.html页面的服务管理-->服务列表，查看注册情况如下：
+
+
+
+=== 第 19 页 ===
+
+出现如上结果，则说明客户端注册成功。
+ 
+四、nacos管理界面介绍
+ 
+nacos界面官网文档：https://nacos.io/zh-cn/docs/what-is-nacos.html
+常用使用位置是nacos的open-api，地址：https://nacos.io/zh-cn/docs/open-api.html
+4.1、服务列表功能
+ 
+服务列表主要用于显示已经注册的服务信息（服务名，分布名称，集群数目，实例数，健康实例
+数，触发保护阈值，操作等）
+显示命名空间，以及根据命名空间划分的服务信息。
+ 
+4.2、服务详情
+ 
+点击上图操作中的详情，可以进入服务详情页面
+保护阈值：nacos具有处理雪崩问题的能力，该值就是用于配置雪崩问题的，取值范围在0-1
+之间。
+权重：负责均衡时使用，分配的权值越大，提供服务的概率越高。
+上线下线问题：如果服务下线，则不能提供服务，但是nacos也不会将该服务从服务列表中
+删除。
+ 
+
+
+
+=== 第 20 页 ===
+
+五、实现功能
+ 
+这里的order-web项目表示服务消费者，stock-service项目表示服务提供者
+服务消费者负责与页面交互，接收请求与参数，调用服务提供者，从提供者获取数据，给用
+户响应
+服务提供者需要访问数据库，执行数据库操作（操作数据库，实现CRUD操作）
+一般是消费者以restful风格发送请求到提供者，从提供者获取数据，提供者也可以通过
+restful风格给提供者发送请求，提供协同操作实现具体功能。
+5.1 调整公共模块
+ 
+5.1.1 添加公共依赖
+ 
+在公共模块（common-api）中添加mybatis-plus的依赖和mysql数据库的驱动。
+5.1.2 创建表与实体类
+ 
+在mysql中创建如下表，并添加数据
+ 
+注意：在这里的实现中需要用到实体类Stock，此时可以在common-api模块中创建，从而使提供
+者和消费者都能使用。
+ <!--引入mybatis-plus的依赖-->
+<dependency>
+    <groupId>com.baomidou</groupId>
+    <artifactId>mybatis-plus-boot-starter</artifactId>
+    <version>3.5.5</version>
+</dependency>
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.16</version>
+</dependency>
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.20</version>
+</dependency>
+CREATE TABLE `t_stock` (
+  `stock_id` int NOT NULL AUTO_INCREMENT,
+  `stock_name` varchar(200) DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  PRIMARY KEY (`stock_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_0900_ai_ci;
+insert  into `t_stock`(`stock_id`,`stock_name`,`price`) 
+values (1,'苹果',8),(2,'香蕉',4),(3,'菠萝',3);
+
+
+
+=== 第 21 页 ===
+
+在创建公共模块的实体类时，不建议使用Lombok，只能手动配置构造方法，get/set方法，
+toString方法。
+ 
+5.2、实现stock-service功能
+ 
+5.2.1 修改全局配置文件
+ 
+修改application.yml文件，具体配置如下：
+ 
+package com.baidu;
+@TableName("t_stock")
+public class Stock {
+    @TableId(value = "stock_id",type = IdType.AUTO)
+    private Integer stockId;
+    private String stockName;
+    private Integer price;
+    
+    //无参数构造方法
+    public Stock() {
+    }
+    //全参数构造方法 
+    public Stock(Integer stockId, String stockName, Integer price) {
+        this.stockId = stockId;
+        this.stockName = stockName;
+        this.price = price;
+    }
+    
+    //省略get.set方法和toString方法
+    。。。。。
+}
+server:
+  port: 9001
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/gz01?serverTimezone=UTC
+    username: root
+    password: xiaoye
+mybatis-plus:
+  type-aliases-package: com.baidu.pojo
+  mapper-locations: classpath:/mappers/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+
+=== 第 22 页 ===
+
+5.2.2 创建dao接口
+ 
+创建com.baidu.dao包，并在该包下创建StockMapper接口，具体代码如下：
+ 
+5.2.3 创建service接口与实现类
+ 
+创建com.baidu.service包，并在该包下创建StockService接口，具体代码如下：
+在com.baidu.service包下创建impl包，并在该包下创建StockServiceImpl类，具体代码如下：
+ 
+5.2.4 创建控制器
+ 
+创建com.baidu.controller包，在该包下创建StockController类，用于处理接收消费者或者其他提
+供者发出的请求，访问数据库，实现对应的功能。
+注意：使用@RequestBody注解接收对象入参时，只能接收post请求方式，不能使用get请
+求方式
+import com.baidu.pojo.Stock;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+@Mapper
+public interface StockMapper extends BaseMapper<Stock> {
+}
+import com.baidu.pojo.Stock;
+import com.baomidou.mybatisplus.extension.service.IService;
+public interface StockService extends IService<Stock> {
+}
+import com.baidu.dao.StockMapper;
+import com.baidu.pojo.Stock;
+import com.baidu.service.StockService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+@Service
+public class StockServiceImpl extends ServiceImpl<StockMapper, Stock> 
+implements StockService {
+}
+package com.baidu.controller;
+import com.baidu.pojo.Stock;
+import com.baidu.service.StockService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+
+
+=== 第 23 页 ===
+
+ 
+5.3、实现order-web功能
+ 
+5.3.1 修改依赖
+ 
+修改pom.xml中对公共模块（common-api）的依赖，排除掉mybatis-plus的依赖。
+import java.util.List;
+@RestController
+@RequestMapping("/stock")
+public class StockController {
+    @Autowired
+    private StockService service;
+    //查询所有库存库存信息
+    @RequestMapping("/getAll")
+    public List<Stock> getAll(){
+        System.out.println("-------查询所有库存库存信息-----");
+        //执行查询
+        List<Stock> list=service.list();
+        return list;
+    }
+    //根据id查询指定的库存信息
+    @RequestMapping("/getStockById/{id}")
+    public Stock getStockById(@PathVariable("id") Integer id){
+        System.out.println("------根据id查询指定的库存信息--------");
+        System.out.println("id:"+id);
+        //执行查询
+        Stock stock=service.getById(id);
+        return stock;
+    }
+    //根据id修改指定商品的库存信息
+    @RequestMapping("/updateStockById")
+    public boolean updateStockById(@RequestBody Stock stock){
+        System.out.println("--------updateStockById------");
+        System.out.println("stock:"+stock);
+        //执行修改
+        boolean flag=service.updateById(stock);
+        return flag;
+    }
+}
+<dependencies>
+    <!--引入公共模块-->
+
+
+
+=== 第 24 页 ===
+
+ 
+5.3.2 创建配置类
+ 
+创建com.baidu.config包，在该包下创建一个配置类（RestTemplateConfig），用于将
+RestTemplate对象配置称bean
+@LoadBalanced表示在发送请求的时候使用负载均衡策略。默认是轮询策略。
+ 
+5.3.3 创建控制器
+ 
+创建com.baidu.controller包，在该包下创建OrderController类，并自动注入RestTemplate对
+象，通过RestTemplate对象发送请求到提供者，从而获取数据。
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <!--排除依赖-->
+        <exclusions>
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+package com.baidu.config;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+@Configuration
+public class RestTemplateConfig {
+    @Bean
+    @LoadBalanced
+    public RestTemplate getRestTemplate(){
+        return new RestTemplate();
+    }
+}
+package com.baidu.controller;
+import com.baidu.pojo.Stock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+
+
+
+=== 第 25 页 ===
+
+import java.util.List;
+@RestController
+@RequestMapping("/order")
+public class OrderController {
+    @Autowired
+    private RestTemplate restTemplate;
+    //添加订单
+    @RequestMapping("/addOrder")
+    public String addOrder(){
+        System.out.println("-------addOrder------");
+        //远程调用，查询所有库存信息
+        String url="http://stock-service/stock/getAll";
+        List<Stock> list=restTemplate.getForObject(url, List.class);
+        //注意这里不能根据泛型类型直接遍历List<Stock>集合，否则会出现类型转换异常，
+        //可以遍历Object类型的List集合。因为getForObject方法没有指定返回值集合的泛型
+类型，所以是Object
+        System.out.println(list);  
+        return "添加订单成功，所有库存信息是："+list;
+    }
+    //查询订单时，根据id查询指定的库存信息
+    @RequestMapping("/getOrderByStockId")
+    public String getOrderByStockId(Integer stockId){ //这里的id表示的是商品库
+存主键
+        System.out.println("------getOrderByStockId-------");
+        System.out.println("stockId:"+stockId);
+        //远程调用，实现根据id查询指定的库存信息
+        String url="http://stock-service/stock/getStockById/{id}";
+        Stock stock=restTemplate.getForObject(url,Stock.class,stockId);
+        System.out.println("stock:"+stock);
+        return "查询订单成功，库存是："+stock;
+    }
+    //修改订单，修改商品库存信息
+    @RequestMapping("upateOrderById")
+    public String upateOrderById(){
+        System.out.println("-----upateOrderById-------");
+        //创建一个Stock对象，表示需要修改的库存
+        Stock stock=new Stock(1,null,8);
+        //远程调用，执行修改商品库存信息
+        String url="http://stock-service/stock/updateStockById";
+        boolean flag=restTemplate.postForObject(url,stock,boolean.class);
+        System.out.println("flag:"+flag);
+        return "修改订单结果由flag决定，flag="+flag;
+    }
+}
+
+
+
+=== 第 26 页 ===
+
+ 
+5.4、测试功能
+ 
+先启动nacos注册中心，然后启动stock-service项目，最后启动order-web项目，查看注册中心的
+服务列表，结果如下：
+在浏览器种输入http://localhost:8001/order/addOrder请求，查看运行结果：
+在浏览器种输入http://localhost:8001/order/getOrderByStockId?stockId=1请求，查看运行结
+果：
+在浏览器中发出http://localhost:8001/order/upateOrderById请求，查看运行结果：
+ 
+ 
+ 
+ 
+ 
+ 
+
+

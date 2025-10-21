@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: game-shop-payment
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        group: DEFAULT_GROUP
+        refresh-enabled: true
+

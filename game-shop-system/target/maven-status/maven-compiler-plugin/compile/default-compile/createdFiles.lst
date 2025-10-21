@@ -1,0 +1,14 @@
+com\baidu\system\controller\AnnouncementsController.class
+com\baidu\system\controller\PythonController.class
+com\baidu\system\entity\Announcement.class
+com\baidu\system\service\OllamaService.class
+com\baidu\system\mapper\AnnouncementMapper.class
+com\baidu\system\service\impl\AnnouncementServiceImpl.class
+com\baidu\system\controller\ChatController.class
+com\baidu\system\controller\FileController.class
+com\baidu\system\service\impl\OllamaServiceImpl.class
+com\baidu\system\config\ChatConfig.class
+com\baidu\system\controller\AnnouncementsController$AnnouncementCreateRequest.class
+com\baidu\system\service\AnnouncementService.class
+com\baidu\system\entity\AnnouncementStatus.class
+com\baidu\system\SystemApplication8086.class

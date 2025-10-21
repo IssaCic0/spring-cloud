@@ -1,0 +1,491 @@
+=== 第 1 页 ===
+
+微服务阿里巴巴课程06：sentinel应用一
+ 
+一、sentinel的相关概念
+ 
+1,1、分布式遇到的问题
+ 
+当服务挂掉的时候，我们首先要想到的原因：
+激增流量打垮
+被其他服务打垮
+异常没处理
+分布式遇到的问题：
+１、缓存击穿
+２、单点故障
+３、缺乏依赖隔离
+４、流量激增
+ 5、负载不均衡
+6、缺乏容错机制
+ 
+1.1.1、服务雪崩：
+ 
+服务雪崩的概念简单的理解为，一条服务链A（用户服务）、B（订单服务）、C（支付服务）三个
+服务，分别是A调用B，B调用C。
+一般而言任务量最大的是底层服务C。
+服务C如果挂了（宕机）导致B服务间接也不可用、B服务不可用又间接导致A不可用。这样这条服
+务链A->B->C也就全部挂了，就像雪崩一样，因为一个服务不可用导致全部服务不可用。因此这种
+现象就是服务雪崩。
+ 
+1.1.2、容错机制：
+ 
+当服务提供者无法正常为消费者提供服务时 ，如请求超时、后台服务无响应、后台服务异常等， 
+通过容错机制直接返回统一处理结果，并对下次请求进行同样处理，直到后台服务功能正常。
+
+
+
+=== 第 2 页 ===
+
+ 
+1.2、常见的容错机制
+ 
+1.2.1、超时机制
+ 
+在不做任何处理的情况下，服务提供者不可用会导致消费者请求线程强制等待，从而造成系统资源
+耗尽。加入超时机制以后，一旦超时，就释放资源，由于释放资源速度较块，一定程度上可以抑制
+资源耗尽的问题。
+1.2.2、服务限流（资源隔离）
+ 
+防止爆发式流量直接压到后台服务实例，造成资源耗尽、甚至应用崩溃
+控制访问流量，通过指定的策略消减流量（如网络层面限制访问流量、后服务实例使用技术
+手段限制并发数量等），使得落到后台服务实例的请求在能承受的范围内。
+nginx，消息中间件都可以实现服务限流。QPS代表每秒钟的请求数量。
+1.2.3、服务熔断
+ 
+本质上说,熔断器是一个快速失败的机制，当调用出现问题的时候，立马结束调用，熔断器就像保
+险丝一样。
+当多次错误发生的时候，就认为这个服务不可用，熔断器有一个检测的功能，当服务不可用时，则
+打开熔断器，进入快速失败，当发现微服务可用，就关闭熔断器进入正常的微服务的调用。
+1.2.4、服务降级
+ 
+有服务熔断，则必然要有服务降级，当发生熔断的以后，服务将不再被调用，此时客户端自己会准
+备一个本地的服务（fallback）,然后去执行本地的服务（降级服务）。
+当访问量剧增、服务出现问题（如响应时间慢或不响应）或非核心服务影响到核心流程的性能时，
+仍然需要保证服务还是可用的，即使是有损服务。
+
+
+
+=== 第 3 页 ===
+
+ 
+1.3、sentinel:分布式系统的流量防卫兵
+ 
+1.3.1、sentinel是什么
+ 
+Sentinel 是面向分布式服务架构的轻量级流量控制产品，主要以流量为切入点，从流量控制、流
+量整形，熔断降级、系统负载保护等多个维度来帮助您保护服务的稳定性。
+1.3.2、sentinel与hystrix对比
+ 
+
+
+
+=== 第 4 页 ===
+
+ 
+ 
+二、使用sentinel
+ 
+sentinel官网：https://sentinelguard.io/zh-cn/docs/quick-start.html
+Sentinel 的使用可以分为两个部分:
+核心库（Java 客户端）：不依赖任何框架/库，能够运行于 Java 8 及以上的版本的运行时环
+境，同时对 Dubbo / Spring Cloud 等框架也有较好的支持（见 主流框架适配）。但是结合
+控制台可以获得最好的效果。
+控制台（Dashboard）：Dashboard 主要负责管理推送规则、监控、管理机器信息等。这种
+方式是目前用的最多的方式。
+下载地址：https://github.com/alibaba/Sentinel/releases
+2.1、核心库方式使用
+ 
+通过sentinel的核心库方式，实现流控规则（了解即可），下面是流控规则的几个重要属性：
+2.1.1、创建项目
+ 
+创建一个不带任何木板的maven项目（sentinel-demo），该项目可以不用继承springcloud-
+parent，因为sentinel不依赖任何框架和库。但是保存位置还是放在父项目下。
+
+
+
+=== 第 5 页 ===
+
+ 
+在maven project中查看项目的目录结构：
+2.1.2、修改pom文件
+ 
+注意引入sentinel的依赖库
+与springboot3.0.2、spring cloud alibaba 2022.0.0.0-RC2对应的sentinel版本是1.8.6
+<dependencies>
+    <!--配置sentinel的核心库-->
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-core</artifactId>
+        <version>1.8.6</version>
+    </dependency>
+    <!--如果要使用@SentinelResourcce注解，则需要引入的依赖-->
+
+
+
+=== 第 6 页 ===
+
+ 
+2.1.3、创建全局配置文件
+ 
+在resources目录下创建全局配置文件（application.yml），代码如下：
+ 
+2.1.4、配置启动器
+ 
+创建com.baidu包，在该包下创建springboot的启动器，代码如下：
+2.1.5、实现功能
+ 
+2.1.5.1、配置规则
+ 
+创建com.baidu.config包，在该包下创建一个 用于配置流控规则的配置类（FlowRuleConfig），
+代码如下：
+@PostConstruct的作用：该注解用于标记一个方法，它在对象创建完成且依赖注入（DI）完
+成后会自动执行。在这个方法中可以进行各种初始化的操作。
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-annotation-aspectj</artifactId>
+        <version>1.8.6</version>
+    </dependency>
+    <!--配置lombok-->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.20</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+        <version>3.0.2</version>
+    </dependency>
+</dependencies>
+server:
+  port: 8004
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class SentinelApplication8004 {
+    public static void main(String[] args) {
+        SpringApplication.run(SentinelApplication8004.class, args);
+    }
+}
+
+
+
+=== 第 7 页 ===
+
+FlowRule：该类表示流控规则类，通过配置该类的方法的值，从而实现配置流控规则。
+ 
+2.1.5.2、创建控制器
+ 
+创建com.baidu.controller包，在该包下创建SentinelController类，用于充当控制器。
+package com.baidu.config;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Configuration;
+import java.util.ArrayList;
+import java.util.List;
+@Configuration
+public class FlowRuleConfig {
+    @PostConstruct
+    public void initFlowRules(){
+        //创建表示流控规则的集合
+        List<FlowRule> ruleList=new ArrayList<>();
+        //创建流控规则
+        FlowRule rule = new FlowRule();
+        //设置受保护的资源，对该资源进行流控,这里配置的是请求名称
+        rule.setResource("/sentinel/testSentinel");
+        //设置流控规则为QPS模式
+        rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        //设置受保护的资源阀值，表示一秒之内只能访问一次，当超过一次的时候，多的会被流控
+        rule.setCount(1);
+        //讲rule流控规则添加到集合中
+        ruleList.add(rule);
+        //加载配置好的规则
+        FlowRuleManager.loadRules(ruleList);
+    }
+}
+
+
+
+=== 第 8 页 ===
+
+注意：在设置资源名称时，请求名称一定要和资源名称保持一致。
+ 
+2.1.6、测试功能
+ 
+测试正常效果
+启动项目，在浏览器中输入http://localhost:8004/sentinel/testSentinel请求，保持一秒钟以
+上刷新一次，查看页面显示效果：
+package com.baidu.controller;
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.Tracer;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/sentinel")
+public class SentinelController {
+    //测试流控
+    @RequestMapping("/testSentinel")
+    public String testSentinel(){
+        Entry entry=null;
+        try {
+            //设置资源名称，当前请求就是资源名称，sentinel针对资源进行限流。
+            entry = SphU.entry("/sentinel/testSentinel");
+            System.out.println("进入/sentinel/testSentinel");
+            return "进入/sentinel/testSentinel";
+        }catch (BlockException e){
+            //资源访问阻止，被限流或被降级
+            System.out.println("被流控了");
+            return "被流控了";
+        }catch(Exception ex) {
+            //若需要配置降级规则，则需要通过这种方式记录业务异常。
+            System.out.println("执行服务降级");
+            Tracer.traceEntry(ex,entry);
+        }finally {
+            if(entry!=null){
+                //退出，归还资源
+                entry.exit();
+            }
+        }
+        return null;
+    }
+}
+
+
+
+=== 第 9 页 ===
+
+测试被流控的效果
+快速刷新页面（一秒以内至少刷新两次），查看页面效果和控制台效果，从结果可以看出流
+控生效了。
+ 
+2.2、@SentinelResource用法
+ 
+上述案例中的控制器，代码太复杂，侵入性太高，我们可以考虑通过@SentinelResource实现控制
+器。
+2.2.1、创建配置类
+ 
+@SentinelResource注解用于改善控制器中资源定义和被流控降级以后的处理方法。
+使用该注解需要添加依赖，这里已经添加过了。
+需要配置一个SentinelResourceAspect对象的Bean。
+可以在com.baidu.config包中创建配置类来实现。
+<!--如果要使用@SentinelResourcce注解，则需要引入的依赖-->
+<dependency>
+    <groupId>com.alibaba.csp</groupId>
+    <artifactId>sentinel-annotation-aspectj</artifactId>
+    <version>1.8.6</version>
+</dependency>
+package com.baidu.config;
+import com.alibaba.csp.sentinel.annotation.aspectj.SentinelResourceAspect;
+
+
+
+=== 第 10 页 ===
+
+ 
+2.2.2、创建实体类
+ 
+创建com.baidu.pojo包，在该包下创建User实体类，代码如下：
+因为添加了lombok的依赖，所以只需要@Data注解即可，不需要写get/set方法和 toString()
+方法。
+ 
+2.2.3、创建控制器
+ 
+创建控制器
+@SentinelResource注解的相关属性可以查看https://sentinelguard.io/zh-cn/docs/annotation-s
+upport.html
+@SentinelResource注解用于写在处理请求的方法头部，主要属性如下：
+value属性：用于配置被流控的资源名称，资源名称就是请求名称
+blockHandler属性：用于配置被流控以后的降级服务处理方法。默认该方法必须声明在同一
+个类中。
+服务降级处理方法的定义有如下约定：
+1、方法的修饰符必须是public
+2、方法的返回值一定要和源方法（处理请求的方法）的返回值保持一致。
+3、方法的形参要与源方法的形参保持一致，并且顺序也必须一样。
+4、可以在方法的最后添加一个BlockException异常类的对象，可以区分使用的是
+什么规则的处理方法。
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+@Configuration
+public class SentinelResourceConfig {
+    //将SentinelResourceAspect对象配置成bean.
+    @Bean
+    public SentinelResourceAspect getAspect(){
+        return new SentinelResourceAspect();
+    }
+}
+package com.baidu.pojo;
+import lombok.Data;
+@Data
+public class User {
+    private Integer id;
+    private String name;
+    private String message;//用于保存流控的处理信息
+}
+  package com.baidu.controller;
+  
+  import com.alibaba.csp.sentinel.annotation.SentinelResource;
+
+
+
+=== 第 11 页 ===
+
+  
+2.2.4、配置规则
+ 
+修改com.baidu.config包中的FlowRuleConfig类，添加上user请求资源的流控规则。
+  import com.alibaba.csp.sentinel.slots.block.BlockException;
+  import com.baidu.pojo.User;
+  import org.springframework.web.bind.annotation.PathVariable;
+  import org.springframework.web.bind.annotation.RequestMapping;
+  import org.springframework.web.bind.annotation.RestController;
+  
+  @RestController
+  @RequestMapping("/user")
+  public class UserController {
+  
+  
+      //根据id获取用户对象的请求
+      @RequestMapping("/getUser/{id}")
+      @SentinelResource(value = "/user/getUser", blockHandler = "myHandlerUser")
+      public User getUserById(@PathVariable("id") Integer id) {
+          System.out.println("-------getUser--------id:"+id);
+  
+          User user=new User();
+          user.setId(id);
+          user.setName("xiaoye");
+          user.setMessage("当前的请求正常处理，没有被留空");
+          return user;
+      }
+  
+      //降级服务，表示请求被流控的时候执行的方法。
+      public User myHandlerUser(Integer id, BlockException e) {
+          //打印异常信息
+          e.printStackTrace();
+  
+          User user=new User();
+          user.setMessage("当前的请求被流控了");
+          return user;
+      }
+  }
+  
+package com.baidu.config;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Configuration;
+import java.util.ArrayList;
+import java.util.List;
+@Configuration
+public class FlowRuleConfig {
+    @PostConstruct
+
+
+
+=== 第 12 页 ===
+
+ 
+2.2.5、测试功能
+ 
+测试正常的请求
+启动项目，在浏览器中输入http://localhost:8004/user/getUser/1请求，
+注意：一秒以内只能发送一次请求，查看控制台和页面结果：
+    public void initFlowRules(){
+        //创建表示流控规则的集合
+        List<FlowRule> ruleList=new ArrayList<>();
+        //创建流控规则
+        FlowRule rule = new FlowRule();
+        //设置受保护的资源，对该资源进行流控,这里配置的是请求名称
+        rule.setResource("/sentinel/testSentinel");
+        //设置流控规则为QPS模式
+        rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        //设置受保护的资源阀值，表示一秒之内只能访问一次，当超过一次的时候，多的会被流控
+        rule.setCount(1);
+        //讲rule流控规则添加到集合中
+        ruleList.add(rule);
+        //添加用于测试@SentinelResource注解的流控规则
+        FlowRule rule2 = new FlowRule();
+        rule2.setResource("/user/getUser");
+        rule2.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        rule2.setCount(1);
+        //添加规则
+        ruleList.add(rule2);
+        //加载配置好的规则
+        FlowRuleManager.loadRules(ruleList);
+    }
+}
+
+
+
+=== 第 13 页 ===
+
+  
+ 
+测试被流控处理
+在一秒之内连续两次以上刷新请求，查看你页面和控制台结果，发现对应的流控生效了。
+ 
+ 
+2.2.6、blockHandlerClass属性
+ 
+@SentinelResource注解的blockHandlerClass属性：如果不想将降级服务处理方法放在同一个类
+中，则可以添加该属性，用于指定降级服务处理方法所在的类。例如：保存在User实体类中，则
+配置为blockHandlerClass=User.class
+注意：如果要保存到User类中（不是控制器中），则方法必须声明为静态方法，因为这些方
+法都是通过反射创建的对象。
+package com.baidu.pojo;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import lombok.Data;
+@Data
+public class User {
+    private Integer id;
+    private String name;
+    private String message;//用于保存流控的处理信息
+    //降级服务，表示请求被流控的时候执行的方法。
+    public static User myHandlerUser(Integer id, BlockException e) {
+        //打印异常信息
+        e.printStackTrace();
+        User user=new User();
+
+
+
+=== 第 14 页 ===
+
+控制器代码如下：
+测试流控，没有被流控的执行结果如下：
+测试被流控的执行结果如下：
+ 
+        user.setMessage("在User类中实现将当前的请求流控");
+        return user;
+    }
+}
+package com.baidu.controller;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.baidu.pojo.User;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/user")
+public class UserController {
+    //根据id获取用户对象的请求
+    @RequestMapping("/getUser/{id}")
+    @SentinelResource(value = "/user/getUser", blockHandler = 
+"myHandlerUser",blockHandlerClass = User.class)
+    public User getUserById(@PathVariable("id") Integer id) {
+        System.out.println("-------getUser--------id:"+id);
+        User user=new User();
+        user.setId(id);
+        user.setName("xiaoye");
+        user.setMessage("当前的请求正常处理，没有被留空");
+        return user;
+    }
+    
+}
+
+

@@ -1,0 +1,9 @@
+com\baidu\api\user\dto\UserDTO.class
+com\baidu\api\payment\dto\PaymentDTO.class
+com\baidu\api\payment\PaymentFeignClient.class
+com\baidu\api\product\dto\ProductDTO.class
+com\baidu\api\user\UserFeignClient.class
+com\baidu\api\payment\CreatePaymentRequest.class
+com\baidu\api\product\ProductFeignClient.class
+com\baidu\api\shop\ShopFeignClient.class
+com\baidu\api\shop\dto\ShopDTO.class

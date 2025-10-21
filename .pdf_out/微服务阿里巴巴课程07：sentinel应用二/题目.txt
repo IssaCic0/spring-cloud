@@ -1,0 +1,786 @@
+=== 第 1 页 ===
+
+微服务阿里巴巴课程07：sentinel应用二
+ 
+一、sentinel的控制台操作
+ 
+1.1、下载并启动控制台
+ 
+ 
+下载sentinel控制台地址：https://github.com/alibaba/Sentinel/releases
+使用控制台地址：https://sentinelguard.io/zh-cn/docs/dashboard.html
+ 
+1.2、启动控制台
+ 
+因为我们使用的spring cloud alibaba的版本是2022.0.0.0-RC2的，对应的sentinel版本为1.8.6，
+所以我们下载并使用这个版本。
+因为sentinel的1.8.6版本无法正常连接上控制台，所以 我们使用1.8.7版本。
+sentinel dashboard的控制台是一个jar文件，我们下载下来以后运行这个jar文件就可以使用
+了。默认使用的是8080端口。
+注意：启动 Sentinel 控制台需要 JDK 版本为 1.8 及以上版本。
+#不修改8080端口的指令启动
+java -jar sentinel-dashboard-1.8.7.jar
+
+
+
+=== 第 2 页 ===
+
+ 
+从 Sentinel 1.6.0 起，Sentinel 控制台引入登录功能，默认用户名和密码都是 sentinel
+控制台启动完成以后，可以在浏览器中输入http://127.0.0.1:8080请求，进入控制台登录页
+面，因为还没有任何服务整合sentinel，所以进入以后是空的。
+1.3、修改控制台端口
+ 
+因为控制台默认使用的是8080端口，这个端口很容易发生端口冲突，所以有必要修改端口。
+java -Dserver.port=8888 -Dsentinel.dashboard.auth.username=sentinel -
+Dsentinel.dashboard.auth.password=sentinel -jar sentinel-dashboard-1.8.7.jar
+
+
+
+=== 第 3 页 ===
+
+因为配置端口启动sentinel的命令太长，我们可以自己创建一个记事本，然后将命令保存进去，选
+择另存为：设置文件命名和后缀（这里我使用的是sentinel-start.bat），保存类型选择所有文件，
+并将该文件保存到jar文件的同一个目录 ，以后运行的时候只需要点击这个文件就自动启动
+sentinel了。
+ 
+二、阿里巴巴整合sentinel
+ 
+2.1、创建项目
+ 
+可以从order-web项目复制一份，重命名为order-sentinel，然后进行必要的调整，成为一个新的
+项目。
+更简便的方法就是直接新建一个模块（项目名：order-sentinel），并继承springcloud-
+parent。
+
+
+
+=== 第 4 页 ===
+
+2.2、项目整合sentinel
+ 
+2.2.1、添加依赖
+ 
+在需要整合的项目里面添加sentinel的依赖。
+例如order-sentinel项目需要整合到sentinel的控制台，则在该项目的pom.xml文件中添加如
+下依赖，版本会自动锁定。
+完整的pom.xml文件配置如下：
+这里之所以要排除掉对配置中心的依赖，那是因为我们在配置服务名称的时候，常用
+spring.application.name，如果通过这个配置时，在配置中心中没有对应的服务名称的配
+置，则会出现异常。
+<!--配置sentinel的启动器-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--配置sentinel的启动器-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+
+
+
+=== 第 5 页 ===
+
+ 
+2.2.2、创建配置文件
+ 
+为微服务设置sentinel控制台地址：在application.yml文件中添加如下配置
+注意：spring.cloud.sentinel.transport.dashboard 配置的是管理平台的地址和端口。
+ 
+2.2.3 创建启动器
+ 
+创建com.baidu包，并在该包下创建SringBoot的启动器，具体代码如下：
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+server:
+  port: 8005
+spring:
+  application:
+    name: order-sentinel
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8888
+  main:
+    allow-bean-definition-overriding: true   
+
+
+
+=== 第 6 页 ===
+
+ 
+2.2.3、创建openfeign接口
+ 
+创建com.baidu.feign包，并在该包下创建StockFeignService接口，通过该接口进行远程调用。
+ 
+2.2.4、创建控制器
+ 
+创建com.baidu.controller包，并在该包下创建控制器（SentinelController），具体代码如下：
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+@SpringBootApplication
+@EnableFeignClients
+public class OrderSentinelApplication8005 {
+    public static void main(String[] args) {
+        SpringApplication.run(OrderSentinelApplication8005.class,args);
+    }
+}
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestMapping;
+@FeignClient(value = "stock-service",path = "/stock")
+public interface StockFeignService {
+    //测试负载均衡
+    @RequestMapping("/testCluster")
+    public String testCluster();
+}
+import com.baidu.feign.StockFeignService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/sentinel")
+public class SentinelController {
+    @Autowired
+    private StockFeignService feignService;
+    //远程调用，测试负载均衡
+    @RequestMapping("/test")
+    public String test(){
+        System.out.println("-------test-----");
+        //远程调用
+        String res=feignService.testCluster();
+
+
+
+=== 第 7 页 ===
+
+ 
+2.2.5、测试功能
+ 
+先启动nacos注册中心，然后启动sentinel控制台，再启动三个stock-service提供者（如果不使用
+集群，则启动一个提供者即可），
+在启动提供者的时候，因为我们前面开启了nacos的鉴权，如果服务提供者没有使用配置中
+心，则需要在pom.xml文件中排除掉关于配置中心的依赖。
+修改服务提供者的全局配置文件（application.yml）,添加上登录nacos的账号与密码
+ 
+最后启动order-sentinel项目。发现在sentinel控制台中还是没有项目，这是因为我们只有发送请
+求到order-sentinel项目以后，sentinel控制台才能看到被监控的项目。
+每一个请求，只有被调用以后才会在sentinel控制台中查看的到。
+在浏览器中输入http://localhost:8005/sentinel/test请求，多刷新几次，查看页面显示结
+果：
+从结果可以看出，请求正常发送了，同时sentinel的的控制台也监控到了服务
+        return "sentinel远程调用成功，res="+res;
+    }
+}
+    <dependencies>
+      <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.alibaba.cloud</groupId>
+                    <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+server:
+  port: 9001
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        weight: 1
+      username: nacos
+      password: nacos
+
+
+
+=== 第 8 页 ===
+
+在sentinel控制台的实时监控中，可以看到如下图：
+ 
+可以在order-sentinel的控制器中再添加一个请求，然后在浏览器中发出该请求，查看sentinel的
+控制台，在实时监控中会有两个图，在族点链路中会有两个请求的配置信息：
+@RequestMapping("/flow")
+public String flow(){
+    return "flow test!!!";
+}
+
+
+
+=== 第 9 页 ===
+
+ 
+三、sentinel的控制规则
+ 
+一定要注意：sentinel配置的规则都是默认存储在内存中的，当重启项目以后，我们之前配置的所
+有规则都会丢失。
+3.1、流控规则
+ 
+流量控制（flow control），其原理是监控应用流量的QPS或并发线程数等指标，当达到指定的阈
+值时对流量进行控制，以避免被瞬时的流量高峰冲垮，从而保障应用的高可用性。
+限流阈值类型：
+QPS：表示每秒的请求数，就是说服务器在一秒的时间内处理多少个请求。
+3.1.1、设置QPS的流控规则
+ 
+进入簇点链路，选择具体的访问请求，点击流控按钮进行设置，单机阀值设置以后，当每秒的请求
+数量超过阀值时，则进行限流。
+点击新增以后，在流控规则中就会出现创建的规则，可以在这里对新建的规则进行修改和删除。
+测试结果：
+
+
+
+=== 第 10 页 ===
+
+在页面中发出http://localhost:8005/sentinelOrder/addOrder请求，连续刷新多次，查看结
+果。
+上图中出现的提示信息是sentinel配置好的，我们可以通过如下方式创建自定义的流控提示信息
+修改order-sentinel的控制器（OrderController），针对/sentinelOrder/addOrder请求，
+进行如下修改
+注意： @SentinelResource注解的value属性的取值只是当前的@RequestMapping中表示请
+求的字符串，没有带上控制器头部的@RequestMapping中的字符串。
+注意：在处理流控的方法形参，必须带上BlockException e，否在出现流控时，会出现异常
+而不是正常的流控提示信息。
+package com.baidu.controller;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+@RestController
+@RequestMapping("/sentinelOrder")
+public class OrderController {
+    @Autowired(required = false)
+    private RestTemplate restTemplate;
+    @RequestMapping("/addOrder")
+    @SentinelResource(value = "/addOrder", blockHandler = 
+"addOrderBlockHandler")
+    public String addOrder() {
+        System.out.println("-----进入了OrderController的addOrder方法---");
+        System.out.println("restTemplate:" + restTemplate);
+        //发出请求到库存提供者，获取操作结果
+        String url = "http://stock-service/stock/updateStock";
+        String result = restTemplate.getForObject(url, String.class);
+        return result;
+    }
+    @RequestMapping("/flow")
+    public String flow(){
+        return "flow test!!!";
+    }
+    //配置/sentinelOrder/addOrder请求被流控处理的结果
+    public String addOrderBlockHandler(BlockException e){
+
+
+
+=== 第 11 页 ===
+
+ 
+重启项目，因为sentinel的规则配置默认是保存到内存中的，所以重启项目以后我们需要重新配置
+flow请求的流控规则。
+注意在配置流控规则的时候，@SentinelResource注解的value属性取值只要配置当前的
+@RequestMapping中表示请求的值才能生效，而不是配置整个完整的请求路径
+  
+  
+        System.out.println("执行流控降级处理方法");
+        e.printStackTrace();
+        return "/sentinelOrder/addOrder请求被流控了";
+    }
+}
+
+
+
+=== 第 12 页 ===
+
+配置完成以后，在浏览器中发出请求，一秒以内发出2个以上的http://localhost:8005/sentinelOr
+der/addOrder请求，查看页面结果：
+  
+3.1.2、设置并发线程数的流控
+ 
+线程的并发数控制用于保护业务线程池不被慢线程调用耗尽。
+sentinel并发控制不负责创建和管理线程池，而是简单统计当前请求上下文的线程数目（即正在执
+行的调用数目），如果超出阀值，新的请求会立即拒绝。
+QPS流控与线程流控的对比
+如果要测试线程流控，我们需要使线程处于睡眠状态，否则无法看到效果。
+修改OrderController控制器，添加用于测试流控的处理的请求，代码如下：
+@RequestMapping("/flowThread")
+@SentinelResource(value = "/flowThread", blockHandler = 
+"flowThreadBlockHandler")
+public String flowThread(){
+    System.out.println("-----进入flowThread方法---");
+    try {
+        Thread.sleep(3000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    return "flowThread 正常访问线程";
+
+
+
+=== 第 13 页 ===
+
+ 
+ 
+测试线程流控
+启动nacos注册中心，启动sentinel控制台，然后启动提供者（stock-service)，启动消费者
+（order-sentinel），在浏览器中输入请求：http://localhost:8005/sentinelOrder/flowThre
+ad，进入sentinel控制台，按照如下方式设置线程流控规则。
+设置线程流控规则：注意是针对/flowThread设置，不是/sentinelOrder/flowThread请求
+注意：没有配置@SentinelResource注解是看不到/sentinelOrder/flowThread请求
+的子选项/flowThread的。
+}
+//被流控后执行的响应
+public String flowThreadBlockHandler(BlockException e){
+    return "/sentinelOrder/flowThread线程请求被流控了";
+}
+
+
+
+=== 第 14 页 ===
+
+打开两个浏览器(或者打开一个浏览器，快速刷新)，分别用于发出http://localhost:8005/sentinel
+Order/flowThread请求，查看结果：
+ 
+3.2、统一异常处理
+ 
+BlockException异常统一处理：
+如果针对不同的流控规则，处理的结果都相同，则可以使用统一处理，如果处理的结果各不相同，
+则不适合使用统一处理。
+例如：同样的流控规则，可以使用OPS，也可以使用线程，但是处理结果不一样，此时就不
+适合使用统一处理。还是要分开处理
+BlockException抽象类有如下五个子类，不同子类代表不同的规则异常。
+FlowException：表示接口限流异常
+DegradeException：表示服务降级异常
+ParamFlowException：表示热点参数限流异常
+SystemBlockException：表示触发了系统保护规则
+AuthorityException：表示权限授权异常
+3.2.1、创建异常处理类
+ 
+实现异常统一处理步骤：
+1、创建com.baidu.exception包，并在该包下创建MyException类，该类必须实现
+BlockExceptionHandler接口，具体代码如下
+注意：必须添加@@Component注解，将该类配置成spring的Bean。
+package com.baidu.exception;
+import 
+com.alibaba.csp.sentinel.adapter.spring.webmvc.callback.BlockExceptionHandle
+r;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowException;
+import com.alibaba.csp.sentinel.slots.system.SystemBlockException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Component;
+import java.io.PrintWriter;
+
+
+
+=== 第 15 页 ===
+
+ 
+3.2.2、创建控制器
+ 
+在openfeign接口中添加查询所有库存的方法
+@Component
+public class MyException implements BlockExceptionHandler {
+    @Override
+    public void handle(HttpServletRequest httpServletRequest, 
+HttpServletResponse httpServletResponse, BlockException e) throws Exception 
+{
+        System.out.println("输出请求信息以及规则详细信息："+ e.getRule());
+        //创建一个字符串变量，用于保存各种个则对应的提示信息
+        String res=null;
+        if(e instanceof FlowException){
+            res="请求被流控了";
+        }else if(e instanceof DegradeException){
+            res="服务被降级了";
+        }else if(e instanceof ParamFlowException){
+            res="热点参数被限流了";
+        }else if(e instanceof SystemBlockException){
+            res="触发了系统保护规则";
+        }else{
+            res="授权规则不通过";
+        }
+        System.out.println("res:"+res);
+        //将提示信息res写出到页面
+        //设置错误代码编号
+        httpServletResponse.setStatus(500);
+        
+        //设置响应字符集，防止页面提示信息显示乱码
+        httpServletResponse.setContentType("application/json");
+        httpServletResponse.setCharacterEncoding("utf-8");
+        
+        //通过响应对象获取写出的PrintWriter对象
+        PrintWriter writer=httpServletResponse.getWriter();
+        //将具体提示信息res写出
+        writer.write(res);
+    }
+}
+
+
+
+=== 第 16 页 ===
+
+ 
+在com.baidu.controller包中创建ExceptionController类。
+注意：如果使用统一异常处理，则可以去掉控制器中的@SentinelResource注解，以及对应
+的异常处理方法，具体代码如下：
+ 
+3.2.3、测试功能
+ 
+启动nacos注册中心，启动sentinel管理平台，然后启动order-service项目，在浏览器中输入htt
+p://localhost:8005/exception/addOrder请求，多刷新几次，进入sentinel控制台，查看实时监
+控，发现请求已经被监控到了。
+ 
+进入簇点链接，设置当前请求的流控规则。
+@FeignClient(value = "stock-service",path = "/stock")
+public interface StockFeignService {
+    
+    。。。。。。。。。。。。。。。。。。。
+    //查询所有库存库存信息
+    @RequestMapping("/getAll")
+    public List<Stock> getAll();
+}
+@RestController
+@RequestMapping("/exception")
+public class ExceptionController {
+    @Autowired
+    private StockFeignService feignService;
+    //测试负载均衡的流控
+    @RequestMapping("/addOrder")
+    public String addOrder(){
+        //远程调用getAll，查询所有库存信息
+        List<Stock> list=feignService.getAll();
+        return "addOrder请求正常处理了，结果是："+list;
+    }
+}
+
+
+
+=== 第 17 页 ===
+
+注意：在控制器中，请求方法前没有了@SentinelResource注解，所以请求里面不会有子选
+项，直接对请求配置规则即可。
+ 
+在浏览器中多刷新几次http://localhost:8005/exception/addOrder请求，查看页面显示结果：
+如果页面中出现乱码，那可能是因为浏览器字符集不是UTF-8，可以修改浏览器字符集或换
+一个浏览器测试。
+如果无法解决浏览器字符集问题，可以直接查看idea控制台输出的str的值。
+ 
+四、sentinel的流控模式
+ 
+
+
+
+=== 第 18 页 ===
+
+流控模式就在流控规则的高级选项中，有三种流控模式：1、直接  2、关联  3、链路，默认使用的
+是直接模式。
+4.1、直接流控模式
+ 
+直接模式：表示当前设置的流控规则只当前设置的资源（/addOrder）限流，不会影响其他与该资
+源相关的资源。
+前面用的都是直接流控模式，这里就不举例实现了。
+ 
+4.2、关联流控模式
+ 
+4.2.1、相关概念
+ 
+关联的概念：当两个资源（请求）之间具有资源争抢或者依赖关系的时候，我们称这两个资源（请
+求）便具有了关联。
+关联模式：关联模式选择以后，下面可以设置一个关联资源，需要注意的是：当前流控针对的是关
+联资源，当关联资源达到阀值以后，受影响的并不是关联资源（/addOrder）,而是设置的资源
+（/flow），直接对设置的资源（/flow）限流
+高优先级资源触发阈值，对低优先级资源限流。
+
+
+
+=== 第 19 页 ===
+
+ 
+4.2.2、测试实现
+ 
+4.2.2.1、创建控制器
+ 
+在com.baidu.controller包中创建SentinelController控制器，并创建请求add，表示添加订单，创
+建请求get表示查询订单。
+注意：这里控制器头部不要添加@RequestMapping，否则关联流控无法关联上
+ 
+4.2.2.2、设置关联流控模式
+ 
+package com.baidu.controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+public class SentinelController {
+    //添加订单
+    @RequestMapping("/add")
+    public String add(){
+        return "添加订单成功!";
+    }
+    //查询订单
+    @RequestMapping("/get")
+    public String get(){
+        return "查询订单成功";
+    }
+}
+
+
+
+=== 第 20 页 ===
+
+生成订单的优先级高于查询订单，我们需要设置的是查询订单请求（/get）的流控规则，当生成订
+单的请求（/add）达到阀值以后，实现对查询订单请求（/get）的限流。
+ 
+4.2.2.3、安装JMeter
+ 
+因为我们没办法在一秒之内发送三个 /add请求，同时又去发出/get请求，所以我们需要借助测试
+工具JMeter，通过该工具不停的发送 /add请求，使该请求达到阀值，然后自己在浏览器中输入htt
+p://localhost:8005/get请求，查看结果
+下载并启动JMeter。
+安装要求：Java8+环境。
+下载地址：https://jmeter.apache.org/download_jmeter.cgi
+
+
+
+=== 第 21 页 ===
+
+下载至本地后，解压压缩包，点击进入bin目录，双击jmeter.bat文件，会启动JMeter 
+GUI工具
+选择Options --> Choose Language --> Chinese(Simplified)，设置语言为中文简体
+ 
+4.2.2.4、测试功能
+ 
+先启动nacos注册中心，然后启动sentinel控制台，再启动JMeter，最后启动order-sentinel项
+目，在浏览器中发出
+http://localhost:8005/get请求，使sentinel实时监控中能看到对应的请求，然后在簇点连接中配
+置关联控制模式如下：
+
+
+
+=== 第 22 页 ===
+
+ 
+在JMeter中配置http://localhost:8005/add请求，确保在1秒之内发送2个以上的请求。
+创建线程组：
+ 
+设置线程组中的线程数以及完成这些线程的时间。
+这里设置的线程数是300，完成时间为100秒，表示每秒完成3个线程。
+ 
+在线程组中添加http请求
+
+
+
+=== 第 23 页 ===
+
+ 
+设置http请求的参数：
+协议：http
+服务器名称或IP：127.0.0.1
+端口号：8005
+http请求：GET
+路径：/add
+ 
+添加监听器，选择查看结果树，查看请求的结果。
+
+
+
+=== 第 24 页 ===
+
+选中查看结果树，然后点击中间的绿色三角形启动JMeter，自动发出http://localhost:8005/a
+dd请求，并且可以达到每秒2个请求以上。运行查看结果
+如果出现下图提示需要保存，直接选择No即可查看到运行的结果
+
+
+
+=== 第 25 页 ===
+
+ 
+在浏览器中输入http://localhost:8005/get请求，查看结果：
+从结果可以看出当关联的资源（/add）达到阀值以后，实际被限流的是当前资源（/get）
+查看JMeter的结果树，显示结果如下：
+
+
+
+=== 第 26 页 ===
+
+ 
+4.3、链路流控模式
+ 
+4.3.1、相关概念
+ 
+链路模式：只针对从指定链路访问到本资源的请求做统计，判断当前资源是否超过阈值。如果超
+过，则对入口资源的限流
+例如：A在调用C，B也在调用C，则A和B都是入口资源，C是当前资源。当A超过阀值时，对
+A资源进行限流。B资源依然可以随意访问，不受任何影响。
+ 
+ 
+4.3.2、测试实现
+ 
+注意：链路流控规则不仅仅可以对请求进行流控，也可以对方法进行流控
+如果要使用链路流控规则，需要到bootstrap.yml文件(application.yml文件也可以)中进行如下配
+置,默认值为true，表示收起调用链路，我们目的是展开调用链路
+spring.cloud.sentinel.web-context-unify= false
+ 
+4.3.2.1、项目环境准备
+ 
+在order-sentinel项目中创建com.baidu.service包，并在该包下创建OrderService接口，代码如
+下：
+
+
+
+=== 第 27 页 ===
+
+创建com.baidu.service.impl包，并在该包下创建OrderServiceImpl类，用于实现OrderService接
+口，代码如下：
+我们只要在逻辑层的业务方法上加上 @SentinelResource(value="getC")，只有这样才能对
+方法设置流控，否则找不到方法，当使用了该注解以后，我们之前配置的统一异常处理就失
+效了，所以需要在这里写上异常处理。
+注意：在处理流控的方法形参，必须带上BlockException e，否在出现流控时，会出现异常
+而不是正常的流控提示信息。
+在com.baidu.controller包中创建控制器LinkController，并设置两个不同的请求，都要求调用
+getOrder()方法。代码如下：
+package com.baidu.service;
+public interface OrderService {
+    //创建方法C的接口
+    public String getC();
+}
+package com.baidu.service.impl;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.baidu.service.OrderService;
+import org.springframework.stereotype.Service;
+@Service
+public class OrderServiceImpl implements OrderService {
+    //创建方法C的实现
+    @SentinelResource(value = "getC",blockHandler = "getCBlockHandler")
+    public String getC(){
+        return "C方法被正常调用！！";
+    }
+    //发生流控的异常处理方法
+    public String getCBlockHandler(BlockException e){
+        return "当前请求的方法被限流了！！";
+    }
+}
+package com.baidu.controller;
+import com.baidu.service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/link")
+public class LinkController {
+    @Autowired
+    private OrderService orderService;
+
+
+
+=== 第 28 页 ===
+
+修改bootstrap.yml文件
+添加spring.cloud.sentinel.web-context-unify= false配置。这里是properties写法，需要改
+成yml写法。
+ 
+4.3.2.2、设置链路流控模式
+ 
+先启动nacos注册中心，然后启动sentinel控制台，最后启动order-sentinel项目
+在浏览器中输入http://localhost:8005/link/A请求和http://localhost:8005/link/B请求，发现下面
+有两个getC资源，此时随便选择一个进行链路流控模式的设置都可以。
+    @RequestMapping("/A")
+    public String getA(){
+        String res=orderService.getC();
+        return "发出/link/A请求:"+res;
+    }
+    @RequestMapping("/B")
+    public String getB(){
+        String res=orderService.getC();
+        return "发出/link/B请求:"+res;
+    }
+}
+
+
+
+=== 第 29 页 ===
+
+ 
+4.3.2.3、测试功能
+ 
+在浏览器中输入http://localhost:8001/link/A请求，快速多刷新几次该请求，查看显示结果：
+ 
+五、sentinel的流控效果(了解)
+ 
+sentinel的流控效果有三种：1、快速失败    2、Warm Up     3、排队等待。 默认是快速失败。
+5.1、快速失败
+ 
+快速失败：当QPS超过任意规则的阈值后，新的请求就会被立即拒绝，拒绝方式为抛出
+FlowException。
+FlowException是BlockException的子类。
+
+
+
+=== 第 30 页 ===
+
+ 
+5.2、Warm UP
+ 
+Warm Up：也叫预热模式。预热模式，对超出阈值的请求同样是拒绝并抛出异常。但这种模式阈
+值会动态变化，从一个较小值逐渐增加到最大阈值。
+根据codeFactor（冷加载因子，默认3）的值，阈值开始从（设置的阀值/codeFactor）开始，经
+过预热时长，慢慢达到设置的QPS阈值。
+ 
+
+
+
+=== 第 31 页 ===
+
+5.3、排队等待
+ 
+排队等待：让所有请求进入一个队列中，然后按照阈值允许的时间间隔依次执行。后来的请求必须
+等待前面执行完成，如果请求
+预期的等待时间超出最大时长，则会被拒绝。阈值类型必须设置为 QPS ，否则无效。
+  
+  
+ 
+ 
+ 
+
+

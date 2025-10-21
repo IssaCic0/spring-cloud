@@ -1,0 +1,8 @@
+com\baidu\shop\service\impl\ShopServiceImpl.class
+com\baidu\shop\entity\Shop.class
+com\baidu\shop\ShopApplication8083.class
+com\baidu\shop\controller\ShopController$ShopUpsertRequest.class
+com\baidu\shop\controller\ShopController.class
+com\baidu\shop\service\ShopService.class
+com\baidu\shop\entity\ShopStatus.class
+com\baidu\shop\mapper\ShopMapper.class

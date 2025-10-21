@@ -1,0 +1,1684 @@
+=== 第 1 页 ===
+
+微服务阿里巴巴02：nacos集群搭建
+ 
+一、linux环境下搭建nacos集群
+ 
+集群模式官方网站：https://nacos.io/zh-cn/docs/cluster-mode-quick-start.html
+ 
+ 
+1.1、预备环境准备
+ 
+基本环境
+64 bit OS Linux/Unix/Mac，推荐使用Linux系统。
+64 bit JDK 1.8+；
+Maven 3.2.x+；
+3个或3个以上Nacos节点才能构成集群
+高可用的nacos集群环境搭建。
+mysql数据库用于持久化存储nacos的配置信息。mysql数据库被集群共享
+ 
+
+
+
+=== 第 2 页 ===
+
+1.2、linux下搭建nacos集群环境
+ 
+下面配置的是IP地址为192.168.271.133的虚拟机，先配置一台，配置完成以后在远程复制到另外
+两台虚拟机，适当调整即可。
+如果考虑到机器的性能，则只配置一台虚拟机，然后将安装的nacos复制到同一台机器上，
+修改服务端口也可以。
+1.2.1、下载nacos的tar包
+ 
+可以直接到https://github.com/alibaba/nacos/releases/tag/1.4.1路径下载需要用到的tar包或者
+zip包。
+ 
+1.2.2、单机安装并配置nacos
+ 
+1.2.2.1、安装nacos
+ 
+使用root用户登录，进入/root目录 ，创建nacos目录，并将nacos-server-1.4.1.tar.gz包上传到此
+目录中
+ 
+在/root目录下创建software目录，将nacos服务端解压到/root/software目录下
+tar -zxvf nacos-server-1.4.1.tar.gz -C /root/software
+
+
+
+=== 第 3 页 ===
+
+1.2.2.2、配置nacos
+ 
+修改conf目录下的application.properties文件，将nacoos自带的基于内存模式的mysql数据库修
+改成外置的mysql数据库。
+注意：mysql数据库版本需要达到5.7以及以上版本，至少要用5.7版本，否则将无法连接上
+mysql。
+注意修改db.url.0取值中的ip地址，因为mysql数据库是集群共享的，所以要指定mysql
+具体在那台虚拟机上。
+当前虚拟机（192.168.217.133）上使用的nacos端口就是8848，所以这里不用改，但是集群
+的其他虚拟机的nacos端口使用的不是8848，而是8847，8846，所以在其他虚拟机上安装的
+nacos，需要在application.properties中修改使用的端口。
+注意：这里设置的密码与安装的mysql有关，mysql登录密码是什么，这里就设置什么密码。
+### Default web server port:
+server.port=8848
+#使用外置mysql数据源的配置
+spring.datasource.platform=mysql
+### count of DB
+db.num=1
+###Connect URL of DB
+db.url.0=jjdbc:mysql://192.168.217.133:3306/nacos?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true&useUnicode=true&useSSL=false&serverTimezone=UTC
+db.user.0=root
+db.password.0=Xiaoye_123
+
+
+
+=== 第 4 页 ===
+
+将conf目录下的cluster.conf.example复制一份，并改名为cluster.conf，在cluster.conf文件中进
+行如下配置：
+通过cp命令进行复制文件
+就是将组件集群的几台虚拟机的ip地址和nacos使用的端口写到cluster.conf文件中。
+配置bin目录下的startup.sh启动文件，为了方式内存不足，将nacos使用的内存大小进行如下配
+置：
+ 
+1.2.3、安装jdk
+ 
+注意：jdk的版本必须是1.8及以上版本，三台虚拟机都必须安装jdk。
+cp  cluster.conf.example  cluster.conf
+
+
+
+=== 第 5 页 ===
+
+上传jdk版本jdk-8u111-linux-x64.rpm，然后通过rpm命令进行安装，安装完成以后自动解
+压到/usr/java目录下。
+配置系统环境变量：进入/etc/profile目录，在底部添加如下内容，然后通过source命令使
+profile生效即可。
+ 
+1.2.4、安装mysql
+ 
+1.2.4.1、安装mysql
+ 
+因为mysql是三台虚拟机的nacos共享，所以只需要在一台虚拟机上安装mysql即可。这里我们安
+装到192.168.217.133的虚拟机上。
+如果linux系统自带的有mysql，则需要先删除以后才能安装，我们用的centos7，没有自带
+mysql，所以可以直接安装。
+查看进程，检查是否安装了mysql，如果安装了，则可以看到mysql的版本情况
+根据如下命名卸载mysql
+ 
+先上传mysql57-community-release-el7-9.noarch.rpm，然后通过rpm命令进行解压，软件会自
+动安装到
+如果出现so-bash: cannot create temp file for here-document: No space left on device错
+误，则说明磁盘空间不足（原本分配给虚拟机的是10G磁盘空间），将之间上传的jdk的tar包
+删除，腾出空间即可。可以通过df -Th命令查看磁盘占用情况。
+rpm -ivh jdk-8u111-linux-x64.rpm
+JAVA_HOME=/usr/java/jdk1.8.0_111
+export JAVA_HOME
+PATH=$PATH:$JAVA_HOME/bin
+export PATH
+rpm -qa|grep mysql
+rpm -e mysql版本 --nodeps
+#下载rpm包,如果有现成的包，也可以直接上传，不用这样下载。
+wget https://dev.mysql.com/get/mysql57-community-release-el7-9.noarch.rpm
+#解压rpm包
+rpm -ivh mysql57-community-release-el7-9.noarch.rpm
+
+
+
+=== 第 6 页 ===
+
+yum安装mysql的服务端
+ 
+启动mysql，并查看启动状态
+yum -y install mysql-server
+
+
+
+=== 第 7 页 ===
+
+ 
+查看默认密码，并记录下来，用于第一次登录，最后出现的R#f6nd1<HzM1就是密码。
+ 
+使用默认密码登录（默认密码上面命令已经查询出来了，是R#f6nd1<HzM1）。
+从这里可以看到当前的mysql版本是5.7.36的。满足nacos1.4.1的要求。
+ 
+#启动mysql
+systemctl start mysqld
+#查看mysql的启动状态
+systemctl status mysqld
+grep 'temporary password' /var/log/mysqld.log
+mysql -uroot -p
+
+
+
+=== 第 8 页 ===
+
+登录成功以后会发现不能使用show databases;需要修改密码以后才能正常使用。
+注意：密码需要数字，字母大小写，特殊字符组合的密码，我设置的成功密码是Xiaoye_123
+ 
+设置允许远程登录，并刷新。
+退出登录，重新通过命令用新设置的密码登录，发现已可以登录成功了。
+通过sqlyog图形软件连接虚拟机上的mysql，发现也可以 连接成功
+alter user 'root'@'localhost' identified by '新密码';
+grant all privileges on *.* to 'root'@'%' identified by '创建的密码' with 
+grant option;
+flush privileges;
+
+
+
+=== 第 9 页 ===
+
+ 
+1.2.4.2、创建数据库
+ 
+创建nacos集群需要用到的数据库，数据库表的代码如下，数据库名称根据配置的需要可以自定
+义。此案例数据库就叫nacos
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info   */
+/******************************************/
+CREATE TABLE `config_info` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(255) DEFAULT NULL,
+  `content` LONGTEXT NOT NULL COMMENT 'content',
+  `md5` VARCHAR(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` TEXT COMMENT 'source user',
+  `src_ip` VARCHAR(50) DEFAULT NULL COMMENT 'source ip',
+  `app_name` VARCHAR(128) DEFAULT NULL,
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT '租户字段',
+  `c_desc` VARCHAR(256) DEFAULT NULL,
+  `c_use` VARCHAR(64) DEFAULT NULL,
+  `effect` VARCHAR(64) DEFAULT NULL,
+  `type` VARCHAR(64) DEFAULT NULL,
+  `c_schema` TEXT,
+
+
+
+=== 第 10 页 ===
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfo_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='config_info';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_aggr   */
+/******************************************/
+CREATE TABLE `config_info_aggr` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(255) NOT NULL COMMENT 'group_id',
+  `datum_id` VARCHAR(255) NOT NULL COMMENT 'datum_id',
+  `content` LONGTEXT NOT NULL COMMENT '内容',
+  `gmt_modified` DATETIME NOT NULL COMMENT '修改时间',
+  `app_name` VARCHAR(128) DEFAULT NULL,
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfoaggr_datagrouptenantdatum` 
+(`data_id`,`group_id`,`tenant_id`,`datum_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='增加租户字段';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_beta   */
+/******************************************/
+CREATE TABLE `config_info_beta` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(128) NOT NULL COMMENT 'group_id',
+  `app_name` VARCHAR(128) DEFAULT NULL COMMENT 'app_name',
+  `content` LONGTEXT NOT NULL COMMENT 'content',
+  `beta_ips` VARCHAR(1024) DEFAULT NULL COMMENT 'betaIps',
+  `md5` VARCHAR(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` TEXT COMMENT 'source user',
+  `src_ip` VARCHAR(50) DEFAULT NULL COMMENT 'source ip',
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfobeta_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_beta';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_tag   */
+/******************************************/
+CREATE TABLE `config_info_tag` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT 'tenant_id',
+
+
+
+=== 第 11 页 ===
+
+  `tag_id` VARCHAR(128) NOT NULL COMMENT 'tag_id',
+  `app_name` VARCHAR(128) DEFAULT NULL COMMENT 'app_name',
+  `content` LONGTEXT NOT NULL COMMENT 'content',
+  `md5` VARCHAR(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` TEXT COMMENT 'source user',
+  `src_ip` VARCHAR(50) DEFAULT NULL COMMENT 'source ip',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfotag_datagrouptenanttag` 
+(`data_id`,`group_id`,`tenant_id`,`tag_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_tag';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_tags_relation   */
+/******************************************/
+CREATE TABLE `config_tags_relation` (
+  `id` BIGINT(20) NOT NULL COMMENT 'id',
+  `tag_name` VARCHAR(128) NOT NULL COMMENT 'tag_name',
+  `tag_type` VARCHAR(64) DEFAULT NULL COMMENT 'tag_type',
+  `data_id` VARCHAR(255) NOT NULL COMMENT 'data_id',
+  `group_id` VARCHAR(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT 'tenant_id',
+  `nid` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`nid`),
+  UNIQUE KEY `uk_configtagrelation_configidtag` 
+(`id`,`tag_name`,`tag_type`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_tag_relation';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = group_capacity   */
+/******************************************/
+CREATE TABLE `group_capacity` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `group_id` VARCHAR(128) NOT NULL DEFAULT '' COMMENT 'Group ID，空字符表示整
+个集群',
+  `quota` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数，，0表示使用默认值',
+  `max_aggr_size` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+
+
+
+=== 第 12 页 ===
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_group_id` (`group_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='集群、各Group
+容量信息表';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = his_config_info   */
+/******************************************/
+CREATE TABLE `his_config_info` (
+  `id` BIGINT(64) UNSIGNED NOT NULL,
+  `nid` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `data_id` VARCHAR(255) NOT NULL,
+  `group_id` VARCHAR(128) NOT NULL,
+  `app_name` VARCHAR(128) DEFAULT NULL COMMENT 'app_name',
+  `content` LONGTEXT NOT NULL,
+  `md5` VARCHAR(32) DEFAULT NULL,
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `src_user` TEXT,
+  `src_ip` VARCHAR(50) DEFAULT NULL,
+  `op_type` CHAR(10) DEFAULT NULL,
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`nid`),
+  KEY `idx_gmt_create` (`gmt_create`),
+  KEY `idx_gmt_modified` (`gmt_modified`),
+  KEY `idx_did` (`data_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='多租户改造';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = tenant_capacity   */
+/******************************************/
+CREATE TABLE `tenant_capacity` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` VARCHAR(128) NOT NULL DEFAULT '' COMMENT 'Tenant ID',
+  `quota` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数',
+  `max_aggr_size` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_id` (`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='租户容量信息
+表';
+
+
+
+=== 第 13 页 ===
+
+ 
+1.2.4.3、测试启动nacos
+ 
+进入nacos安装路径的bin目录，通过如下命令启动nacos
+CREATE TABLE `tenant_info` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `kp` VARCHAR(128) NOT NULL COMMENT 'kp',
+  `tenant_id` VARCHAR(128) DEFAULT '' COMMENT 'tenant_id',
+  `tenant_name` VARCHAR(128) DEFAULT '' COMMENT 'tenant_name',
+  `tenant_desc` VARCHAR(256) DEFAULT NULL COMMENT 'tenant_desc',
+  `create_source` VARCHAR(32) DEFAULT NULL COMMENT 'create_source',
+  `gmt_create` BIGINT(20) NOT NULL COMMENT '创建时间',
+  `gmt_modified` BIGINT(20) NOT NULL COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_info_kptenantid` (`kp`,`tenant_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='tenant_info';
+CREATE TABLE `users` (
+    `username` VARCHAR(50) NOT NULL PRIMARY KEY,
+    `password` VARCHAR(500) NOT NULL,
+    `enabled` BOOLEAN NOT NULL
+);
+CREATE TABLE `roles` (
+    `username` VARCHAR(50) NOT NULL,
+    `role` VARCHAR(50) NOT NULL,
+    UNIQUE INDEX `idx_user_role` (`username` ASC, `role` ASC) USING BTREE
+);
+CREATE TABLE `permissions` (
+    `role` VARCHAR(50) NOT NULL,
+    `resource` VARCHAR(255) NOT NULL,
+    `action` VARCHAR(8) NOT NULL,
+    UNIQUE INDEX `uk_role_permission` (`role`,`resource`,`action`) USING 
+BTREE
+);
+INSERT INTO users (username, PASSWORD, enabled) VALUES ('nacos', 
+'$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
+INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+./startup.sh start
+
+
+
+=== 第 14 页 ===
+
+ 
+查看启动完成以后的日志文件（/root/software/nacos/logs/start.out）
+从日志中可以看出nacos集群已经正常启动了，注意：启动单个nacos时，一定要保证另外两
+台虚拟机是启动状态，否则出错。
+在浏览器中输入http://192.168.217.133:8845/nacos，进入集群管理，查看节点列表，结果如
+下：
+ 
+cat /root/software/nacos/logs/start.out
+
+
+
+=== 第 15 页 ===
+
+1.2.5、组建nacos集群
+ 
+用同样的方式分别在另外两台虚拟机上安装jdk和nacos即可，不需要安装mysql。注意如下配置：
+配置conf/application.propertis文件
+修改nacos的端口，192.168.217.134主机使用的端口是8847，192.168.217.135主机使
+用的端口是8846
+，修改数据库连接，连接到192.168.217.133主机的mysql。用户名为root，密码为
+Xiaoye_123
+配置cluster.conf文件
+拷贝cluster.conf.example文件，，生成cluster.conf文件
+在cluster.conf文件中配置三台主机的id以及nacos的服务端口
+配置bin/startup.sh文件
+修改nacos启动占用的内存。
+测试集群，都配置好以后，进入到bin目录下，通过如下命令启动nacos，并查看日志
+如果最后一行出现如下内容，则说明集群启动成功了。
+在浏览器中输入任意一个nacos图形工具，查看节点列表，发现三个节点都处于up状态了，
+也说明集群配置成功了。
+ 
+1.2.6、安装nginx
+ 
+在三台虚拟机中任意找一台虚拟机（硬盘空间足够大的虚拟机），因为我的192.168.217.133的虚
+拟机硬盘空间不足，所以这里就将nginx安装到192.168.217.134的虚拟机上了。
+1.2.6.1、安装nginx
+ 
+添加官方源仓库
+#启动nacos
+./startup.sh start
+#查看日志
+cat /root/software/nacos/logs/start.out
+Nacos started successfully in cluster mode. use external storage
+yum install -y yum-utils
+yum-config-manager --add-repo 
+https://openresty.org/package/centos/openresty.repo
+
+
+
+=== 第 16 页 ===
+
+安装openresty
+安装完成以后可以进入到/usr/local/openresty目录下查看安装的nginx
+nginx反向代理配置
+进入nginx的conf目录，修改nginx.conf配置文件，将该内容保存到http{}的大括号中。注意
+不要保存到server的大括号中去了，最好保存到http结束的反大括号前面。这段配置可以按
+照如下方式理解：
+首先nginx监听8888端口，当8888端口收到/nacos请求以后，会进过反向代理
+（proxy_pass）将请求转发到http://nacoscluster主机对于的nacos目录下，而http://n
+yum install -y openresty
+cd /usr/local/openresty
+
+
+
+=== 第 17 页 ===
+
+acoscluster主机就是我们配置的集群。
+启动nginx
+进入sbin目录，里面只有一个nginx文件，通过如下命令启动nginx
+1.2.6.2、测试nginx反向代理
+ 
+启动nginx以后，在浏览器中输入http:192.168.217.134:8888/nacos，会看到如下结果，输入账
+号密码以后，查看节点列表：
+当在节点列表中看到了三个属于up状态的节点，则说明nginx方向代理安装成功了。
+upstream nacoscluster{
+    server 192.168.217.133:8845;
+    server 192.168.217.134:8847;
+    server 192.168.217.135:8846;
+}
+server{
+    listen 8888;
+    server_name localhost;
+    
+    location /nacos/{
+        proxy_pass http://nacoscluster/nacos/;
+    }
+}
+./nginx    #注意：启动nginx不需要带start
+
+
+
+=== 第 18 页 ===
+
+ 
+1.3、测试项目功能
+ 
+1.3.1、测试项目注册
+ 
+修改stock-nacos项目的bootstrap.yml文件，将注册地址配置成nginx的地址。服务配置地址也配
+置成nginx的地址。用同样的方式也将order-nacos项目配置了。
+配置完成以后启动这两个项目，在浏览器中输入http://192.168.217.134:8888/nacos请求，查看
+服务列表：发现项目都已经注册了。
+如果有兴趣，也可以分别进入到三台虚拟机的nacos管理界面，发现这两个项目的注册信息
+在三个平台上都注册了。
+server:
+  port: 9001
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.217.134:8888
+      config:
+        server-addr: 192.168.217.134:8888
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+=== 第 19 页 ===
+
+ 
+1.3.2、测试项目功能
+ 
+项目通过nginx注册成功以后，在浏览器中输入http://localhost:8001/addOrder请求，查看结
+果，发现请求已经发送到了提供者（stock-nacos），并且获得了提供者提供的数据。说明整个集
+群完全搭建成功了。
+ 
+二、docker环境下搭建nacos集群
+ 
+2.1、docker下搭建nacos单体环境
+ 
+也可以不用docker,直接下载linux环境下的nacos1.4.1版本，然后进项按装解压
+2.1.1、拉取镜像
+ 
+搜索nacos镜像源
+拉取指定版本的镜像，注意：版本必须是1.4.1的。
+docker search nacos
+docker pull nacos/nacos-server:1.4.1
+
+
+
+=== 第 20 页 ===
+
+ 
+2.1.2、配置naocs服务端
+ 
+新建nacos挂载目录
+修改配置文件custom.properties
+Nacos本身采用的是基于内存的mysql数据库，在机器重启后相关配置都没了，所以需要配置
+自定义的mysql数据源，如果是本地，也不能直接用127.0.0.1，因为docker容器也有对应的
+IP,所以需要查看一下对应的IP地址。
+注意：使用的myql版本必须在5.7版本以上（包括5.7版本）,这里用的是docker中的mysql数
+据库
+具体如何在docker中创建mysql容器，请查看docker相关教程。
+mysql容器创建完成以后，需要在容器中创建nacos_server数据库。注意修改数据库的
+字符集
+这里使用的端口是12345，密码是123456，这是在创建mysql容器的时候设置的。
+mkdir -p /mydata/nacos/logs/ # 新建logs目录
+mkdir -p /mydata/nacos/init.d/
+
+
+
+=== 第 21 页 ===
+
+custom.properties完整配置信息
+spring.datasource.platform=mysql
+db.num=1
+# 这里要对应ip，以及对应的数据库
+db.url.0=jdbc:mysql://192.168.217.133:12345/nacos_server?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true
+db.user=root
+db.password=123456
+server.contextPath=/nacos
+server.servlet.contextPath=/nacos
+server.port=8848
+spring.datasource.platform=mysql
+db.num=1
+# 这里要对应ip，以及对应的数据库
+db.url.0=jdbc:mysql://192.168.217.133:12345/nacos_server?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true
+db.user=root
+db.password=123456
+nacos.cmdb.dumpTaskInterval=3600
+nacos.cmdb.eventTaskInterval=10
+nacos.cmdb.labelTaskInterval=300
+nacos.cmdb.loadDataAtStart=false
+management.metrics.export.elastic.enabled=false
+management.metrics.export.influx.enabled=false
+server.tomcat.accesslog.enabled=true
+server.tomcat.accesslog.pattern=%h %l %u %t "%r" %s %b %D %{User-Agent}i
+nacos.security.ignore.urls=/,/**/*.css,/**/*.js,/**/*.html,/**/*.map,/**/*.s
+vg,/**/*.png,/**/*.ico,/console-
+fe/public/**,/v1/auth/login,/v1/console/health/**,/v1/cs/**,/v1/ns/**,/v1/cm
+db/**,/actuator/**,/v1/console/server/**
+nacos.naming.distro.taskDispatchThreadCount=1
+nacos.naming.distro.taskDispatchPeriod=200
+
+
+
+=== 第 22 页 ===
+
+通过如下面命令修改custom.properties文件，将上述内容复制进去即可。
+ 
+2.1.3、运行nacos镜像
+ 
+前面的配置完成以后就可以通过如下命令运行镜像，生成容器了。
+这里是以单机模式启动的（ MODE=standalone）
+在运行nacos镜像之前需要前启动mysql容器。
+运行镜像时会自动创建并启动容器，可以通过http://192.168.217.133:8848/nacos/index.html地
+址访问虚拟机中的nacos管理器。
+nacos.naming.distro.batchSyncKeyCount=1000
+nacos.naming.distro.initDataRatio=0.9
+nacos.naming.distro.syncRetryDelay=5000
+nacos.naming.data.warmup=true
+nacos.naming.expireInstance=true
+vim /mydata/nacos/init.d/custom.properties # 修改配置文件
+docker run --name nacos -p 8848:8848 \
+--privileged=true \
+--restart=always \
+-e JVM_XMS=256m \
+-e JVM_XMX=256m \
+-e MODE=standalone \
+-e PREFER_HOST_MODE=hostname \
+-v /mydata/nacos/logs:/home/nacos/logs \
+-v 
+/mydata/nacos/init.d/custom.properties:/home/nacos/init.d/custom.properties 
+\
+-d nacos/nacos-server:1.4.1
+
+
+
+=== 第 23 页 ===
+
+ 
+2.1.4、启动nacos容器
+ 
+可以通过如下命令启动容器，因为容器名称叫nacos，所以下面命令可以直接使用。
+容器启动以后，只需要进入idea,将项目在nacos中的注册地址改成linux中nacos容器地址，就可以
+在管理平台看到注册的信息了。
+例如下配置的order-nacos项目的application.yml文件配置，将stock-nacos项目也一样配
+置。
+注意：springcloud alibaba中，全局配置文件名称叫做bootstrap.yml更正规，如果不
+叫这个名称，可能会出现如下异常，所以我们有必要将application.yml改名为
+bootstrap.yml，如果叫application.yml，则只会到本地电脑的nacos注册，如果到虚拟
+机上的nacos注册中心注册，则会出现如下异常，但是依然可以正常使用。
+查看虚拟机的nacos中的服务列表信息，结果如下：
+docker start nacos
+The maximum number of tolerable server reconnection errors has been 
+reached
+server:
+  port: 8001
+spring:
+  application:
+    name: order-service
+cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.217.133:8848
+      config:
+        server-addr: 192.168.217.133:8848
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+=== 第 24 页 ===
+
+ 
+2.1.5、测试功能
+ 
+启动nacos容器，运行order-nacos项目和stock-nacos项目，在浏览器中输入http://localhost:800
+1/addOrder请求，查看结果，发现请求已经从order-nacos项目发送到了stock-nacos项目，并获
+取了数据。
+ 
+2.2、docker下搭建nacos集群环境
+ 
+搭建nacos集群的前提条件是需要先关闭防火墙，只需要一台虚拟机即可，需要在安装jdk，mysql
+和nginx，另外创建三个naocs的容器。
+安装顺序：JDK-->mysql-->三个nacos容器-->nginx
+2.2.1、创建mysql数据库
+ 
+拉取mysql5.7版本的镜像，按如下命令允许镜像
+启动mysql5.7容器（mysql的版本不得低于5.7），使用sqlyog工具连接容器，创建nacos_config
+数据库，并创建nacos的配置表
+docker run -p 12345:3306 --name mysql -v 
+/mydocker/mysql/conf:/etc/mysql/mysql.conf.d -v /mydocker/mysql/logs:/logs -
+v /mydocker/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 --
+privileged=true -d mysql:5.7
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/******************************************/
+create database nacos_config;
+use nacos_config;
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info   */
+/******************************************/
+
+
+
+=== 第 25 页 ===
+
+CREATE TABLE `config_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(255) DEFAULT NULL,
+  `content` longtext NOT NULL COMMENT 'content',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `c_desc` varchar(256) DEFAULT NULL,
+  `c_use` varchar(64) DEFAULT NULL,
+  `effect` varchar(64) DEFAULT NULL,
+  `type` varchar(64) DEFAULT NULL,
+  `c_schema` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfo_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='config_info';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_aggr   */
+/******************************************/
+CREATE TABLE `config_info_aggr` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(255) NOT NULL COMMENT 'group_id',
+  `datum_id` varchar(255) NOT NULL COMMENT 'datum_id',
+  `content` longtext NOT NULL COMMENT '内容',
+  `gmt_modified` datetime NOT NULL COMMENT '修改时间',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfoaggr_datagrouptenantdatum` 
+(`data_id`,`group_id`,`tenant_id`,`datum_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='增加租户字段';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_beta   */
+/******************************************/
+CREATE TABLE `config_info_beta` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+  `beta_ips` varchar(1024) DEFAULT NULL COMMENT 'betaIps',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+
+
+
+=== 第 26 页 ===
+
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfobeta_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_beta';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_tag   */
+/******************************************/
+CREATE TABLE `config_info_tag` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `tag_id` varchar(128) NOT NULL COMMENT 'tag_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfotag_datagrouptenanttag` 
+(`data_id`,`group_id`,`tenant_id`,`tag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_tag';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_tags_relation   */
+/******************************************/
+CREATE TABLE `config_tags_relation` (
+  `id` bigint(20) NOT NULL COMMENT 'id',
+  `tag_name` varchar(128) NOT NULL COMMENT 'tag_name',
+  `tag_type` varchar(64) DEFAULT NULL COMMENT 'tag_type',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `nid` bigint(20) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`nid`),
+  UNIQUE KEY `uk_configtagrelation_configidtag` 
+(`id`,`tag_name`,`tag_type`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_tag_relation';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = group_capacity   */
+
+
+
+=== 第 27 页 ===
+
+/******************************************/
+CREATE TABLE `group_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `group_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Group ID，空字符表示整
+个集群',
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数，，0表示使用默认值',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_group_id` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='集群、各Group
+容量信息表';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = his_config_info   */
+/******************************************/
+CREATE TABLE `his_config_info` (
+  `id` bigint(64) unsigned NOT NULL,
+  `nid` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `data_id` varchar(255) NOT NULL,
+  `group_id` varchar(128) NOT NULL,
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL,
+  `md5` varchar(32) DEFAULT NULL,
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `src_user` text,
+  `src_ip` varchar(50) DEFAULT NULL,
+  `op_type` char(10) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`nid`),
+  KEY `idx_gmt_create` (`gmt_create`),
+  KEY `idx_gmt_modified` (`gmt_modified`),
+  KEY `idx_did` (`data_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='多租户改造';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = tenant_capacity   */
+/******************************************/
+CREATE TABLE `tenant_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Tenant ID',
+
+
+
+=== 第 28 页 ===
+
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='租户容量信息
+表';
+CREATE TABLE `tenant_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `kp` varchar(128) NOT NULL COMMENT 'kp',
+  `tenant_id` varchar(128) default '' COMMENT 'tenant_id',
+  `tenant_name` varchar(128) default '' COMMENT 'tenant_name',
+  `tenant_desc` varchar(256) DEFAULT NULL COMMENT 'tenant_desc',
+  `create_source` varchar(32) DEFAULT NULL COMMENT 'create_source',
+  `gmt_create` bigint(20) NOT NULL COMMENT '创建时间',
+  `gmt_modified` bigint(20) NOT NULL COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_info_kptenantid` (`kp`,`tenant_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='tenant_info';
+CREATE TABLE `users` (
+    `username` varchar(50) NOT NULL PRIMARY KEY,
+    `password` varchar(500) NOT NULL,
+    `enabled` boolean NOT NULL
+);
+CREATE TABLE `roles` (
+    `username` varchar(50) NOT NULL,
+    `role` varchar(50) NOT NULL,
+    UNIQUE INDEX `idx_user_role` (`username` ASC, `role` ASC) USING BTREE
+);
+CREATE TABLE `permissions` (
+    `role` varchar(50) NOT NULL,
+    `resource` varchar(255) NOT NULL,
+    `action` varchar(8) NOT NULL,
+    UNIQUE INDEX `uk_role_permission` (`role`,`resource`,`action`) USING 
+BTREE
+);
+INSERT INTO users (username, password, enabled) VALUES ('nacos', 
+'$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
+
+
+
+=== 第 29 页 ===
+
+ 
+2.2.2、启动nacos容器
+ 
+docker搭建nacos集群的常用配置：https://nacos.io/zh-cn/docs/quick-start-docker.html
+ 
+在虚拟机上都拉取nacos1.4.1版本的镜像
+ 
+按照如下命令启动三个nacos镜像。
+启动命令的理解
+INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+docker pull nacos/nacos-server:1.4.1
+
+
+
+=== 第 30 页 ===
+
+-e PREFER_HOST_MODE=hostname 表示：支持以主机名（hostname表示主机名）方
+式发访问。
+-e MODE=cluste-e MODE=cluster 表示：以集群模式运行
+-e NACOS_APPLICATION_PORT=8848 表示：这台Nacos服务的端口是8848
+-e NACOS_SERVERS="192.168.217.133:8848 192.168.217.134:8849 
+192.168.217.135:8850" 表示：Nacos集群的所有机器的信息，多个ip地址之间使用空
+格间隔，可以尝试一下用逗号似乎也可以
+-e SPRING_DATASOURCE_PLATFORM=mysql 表示：使用外置MySQL存储配置信息
+-e MYSQL_SERVICE_HOST=192.168.217.133 表示：外置MySQL的IP地址
+-e MYSQL_SERVICE_PORT=12345 表示：外置MySQL的端口
+-e MYSQL_SERVICE_USER=root 表示外置MySQL的用户名
+-e MYSQL_SERVICE_PASSWORD=123456 表示外置MySQL的密码
+-e MYSQL_SERVICE_DB_NAME=nacos_config 表示：外置MySQL的数据库，也就是
+Nacos的配置文件要存储得到哪个数据库，这个在单机版Nacos使用外置数据库时候介
+绍过
+-e NACOS_SERVER_IP=192.168.217.133 表示这台Nacos服务的IP地址
+-p 8848:8848 表示：表示暴露端口，即容器外部端口映射
+--name nacos01 表示：给nacos容器取的容器名称
+-d nacos/nacos-server:1.4.1 表示：以后台模式运行nacos-server.1.4.1版本镜像。
+ 
+按照如上格式，启动三台虚拟机上的nacos镜像
+启动192.168.217.135主机上的nacos的指令
+#第一台nacos镜像
+docker run \
+-e PREFER_HOST_MODE=hostname \
+-e MODE=cluster \
+-e NACOS_APPLICATION_PORT=8848 \
+-e NACOS_SERVERS="192.168.217.135:8848 192.168.217.135:8849 
+192.168.217.135:8850" \
+-e SPRING_DATASOURCE_PLATFORM=mysql \
+-e MYSQL_SERVICE_HOST=192.168.217.135\
+-e MYSQL_SERVICE_PORT=12345 \
+-e MYSQL_SERVICE_USER=root \
+-e MYSQL_SERVICE_PASSWORD=123456 \
+-e MYSQL_SERVICE_DB_NAME=nacos_config \
+-e NACOS_SERVER_IP=192.168.217.135 \
+-e JVM_XMS=512m \
+-e JVM_XMX=512m \
+-e JVM_XMN=256m \
+-p 8848:8848 \
+--name my-nacos1 \
+-d nacos/nacos-server:1.4.1
+#第二台nacos镜像
+docker run \
+-e PREFER_HOST_MODE=hostname \
+-e MODE=cluster \
+-e NACOS_APPLICATION_PORT=8849 \
+-e NACOS_SERVERS="192.168.217.135:8848 192.168.217.135:8849 
+192.168.217.135:8850" \
+-e SPRING_DATASOURCE_PLATFORM=mysql \
+-e MYSQL_SERVICE_HOST=192.168.217.135 \
+
+
+
+=== 第 31 页 ===
+
+ 
+如果容器启动不报错，但是无法通过浏览器连接上对应的nacos控制台，则可以通过如下方法查看
+日志
+在日志中我们可能看到如下异常
+当出现上述异常的时候，有可能是应为mysql容器没有启动，我们需要先启动mysql容器，然后启
+动nacos集群。
+当出现安装时WARNING: IPv4 forwarding is disabled. Networking will not work.内容时，也可
+能会导致数据库连接不成功，
+-e MYSQL_SERVICE_PORT=12345 \
+-e MYSQL_SERVICE_USER=root \
+-e MYSQL_SERVICE_PASSWORD=123456 \
+-e MYSQL_SERVICE_DB_NAME=nacos_config \
+-e NACOS_SERVER_IP=192.168.217.135 \
+-e JVM_XMS=512m \
+-e JVM_XMX=512m \
+-e JVM_XMN=256m \
+-p 8849:8849 \
+--name my-nacos2 \
+-d nacos/nacos-server:1.4.1
+#第三台虚拟机的nacos
+docker run \
+-e PREFER_HOST_MODE=hostname \
+-e MODE=cluster \
+-e NACOS_APPLICATION_PORT=8850 \
+-e NACOS_SERVERS="192.168.217.135:8848 192.168.217.135:8849 
+192.168.217.135:8850" \
+-e SPRING_DATASOURCE_PLATFORM=mysql \
+-e MYSQL_SERVICE_HOST=192.168.217.135 \
+-e MYSQL_SERVICE_PORT=12345 \
+-e MYSQL_SERVICE_USER=root \
+-e MYSQL_SERVICE_PASSWORD=123456 \
+-e MYSQL_SERVICE_DB_NAME=nacos_config \
+-e NACOS_SERVER_IP=192.168.217.135 \
+-e JVM_XMS=512m \
+-e JVM_XMX=512m \
+-e JVM_XMN=256m \
+-p 8850:8850 \
+--name my-nacos3 \
+-d nacos/nacos-server:1.4.1
+docker logs 容器名称
+Caused by: java.sql.SQLNonTransientConnectionException: Could not create 
+connection to database server. Attempted reconnect 3 times. Giving up.
+    
+Caused by: com.mysql.cj.exceptions.CJCommunicationsException: Communications 
+link failure
+Caused by: java.net.SocketTimeoutException: connect timed out
+
+
+
+=== 第 32 页 ===
+
+此时需要进项如下配置，一定要先确保防火墙关闭
+验证集群搭建成功
+分别打开三个容器的日志文件，查看日志，如果最下面出现如下内容，则说明当前主机
+属于正常启动
+很多时候启动nacos容器以后并不会直接出现 Nacos started successfully in cluster 
+mode. use external storage，而是出现如下图结果，需要等一段时间才会出现上述成
+功启动了集群的提示
+分别使用不同的ip地址和端口，在浏览器中查看是否 能进nacos控制台界面，如果都能
+进，则说明都正常启动了。点击集群管理，到节点列表，查看到如下界面，则说明集群
+vi /usr/lib/sysctl.d/00-system.conf
+添加如下代码：
+net.ipv4.ip_forward=1
+重启network服务
+systemctl restart network
+ Nacos started successfully in cluster mode. use external storage
+
+
+
+=== 第 33 页 ===
+
+搭建成功了。
+ 
+ 
+nacos集群优化
+因为nacos默认使用大小是2g，占用了太多的内存资源，当启动springboot应用服务进行注
+册时，可能会出现如下异常：
+上面截图中的含义：
+Xms 是指设定程序启动时占用内存大小
+Xmx 是指设定程序运行期间最大可占用的内存大小 
+Xmn 新生代的大小 
+这个提示是说nacos服务器过载，所以需要收敛资源，所以我们需要手动配置nacos运行所占
+用的内存大小：
+我们使用的是docker容器下的nacos，很难直接修改，在运行镜像，生成容器时进行如
+下配置（其他两个默认即可）：
+http://192.168.217.135:8848/nacos/index.html
+http://192.168.217.135:8849/nacos/index.html
+http://192.168.217.135:8850/nacos/index.html
+Caused by: com.alibaba.nacos.api.exception.NacosException:failed to req 
+API:/nacos/v1/ns/instance after all servers([192.168.217.133:8080]) tried: 
+ErrCode:503, ErrMsg:server is DOWN now, please try again later!
+    
+ org.springframework.context.ApplicationContextException:Failed to start 
+bean 'webServerStartStop'; nested exception is java.lang.reflect    
+-e JVM_XMS=512m
+-e JVM_XMX=512m
+-e JVM_XMN=256m
+
+
+
+=== 第 34 页 ===
+
+前面使用的启动容器的命令是已经调整好的，启动容器，注意修改容器名称和端口。
+创建完成以后，查看容器日志，可以看到内存配置已经被修改了。
+ 
+2.2.3、安装nginx
+ 
+nginx在nacos集群中的作用是对用户请求进行分发，对nacos集群中各个注册中心实现负载均
+衡，nginx的默认负载均衡策略是轮询策略。可以适当使用比较新的nginx版本，我这里是使用
+latest版本，目前最新版本是nginx1.21.4。
+拉取nginx镜像：可以任意选择一台虚拟机安装nginx，我这里就安装到192.168.217.133的虚拟
+机。
+docker run \
+-e PREFER_HOST_MODE=hostname \
+-e MODE=cluster \
+-e NACOS_APPLICATION_PORT=8848 \
+-e NACOS_SERVERS="192.168.217.135:8848 192.168.217.135:8849 
+192.168.217.135:8850" \
+-e SPRING_DATASOURCE_PLATFORM=mysql \
+-e MYSQL_SERVICE_HOST=192.168.217.135 \
+-e MYSQL_SERVICE_PORT=12345 \
+-e MYSQL_SERVICE_USER=root \
+-e MYSQL_SERVICE_PASSWORD=123456 \
+-e MYSQL_SERVICE_DB_NAME=nacos_config \
+-e NACOS_SERVER_IP=192.168.217.133 \
+-e JVM_XMS=512m \
+-e JVM_XMX=512m \
+-e JVM_XMN=256m \
+-p 8848:8848 \
+--name my-nacos1 \
+-d nacos/nacos-server:1.4.1
+docker pull nginx
+
+
+
+=== 第 35 页 ===
+
+运行镜像启动容器
+配置nginx配置文件
+将容器内部的/etc/nginx/nginx.conf文件拷贝到/root目录下，然后进行修改，命令如下
+在宿主机中修改nginx.conf文件内容
+upstream cluster配置的是nacos集群的位置
+docker run --name my-nginx -p 8080:8080 -d nginx
+#docker cp 容器名称:/etc/nginx/nginx.conf 宿主机的目标路径
+docker cp my-nginx:/etc/nginx/nginx.conf /root
+upstream cluster{
+        server 192.168.217.135:8848;
+        server 192.168.217.135:8849;
+        server 192.168.217.135:8850;
+    }
+
+
+
+=== 第 36 页 ===
+
+ 
+如下配置表示nginx监听8080端口，当通过8080端口访问nginx时，proxy_pass反向代
+理将请求转发到http://cluster/地址的nacos，而这个地址正是nacos的集群地址。
+在nginx.conf文件的http块加上下面这段配置，这段代码必须保存到http代码块中，否
+则启动会报错，这段代码直接保存到结束部分的反大括号上面即可。
+修改完成以后将改nginx.conf文件重新拷贝到容器的/etc/nginx/目录下，然后重启nginx容
+器。
+server {
+        listen 8080;
+        server_name localhost;
+        location /nacos/{
+                 proxy_pass http://cluster/nacos/;
+        }
+    }
+upstream cluster{
+        server 192.168.217.135:8848;
+        server 192.168.217.135:8849;
+        server 192.168.217.135:8850;
+    }
+    
+    server {
+         listen 8080;
+        server_name localhost;
+        location /nacos/{
+                 proxy_pass http://cluster/nacos/;
+        }
+    }
+
+
+
+=== 第 37 页 ===
+
+ 
+2.3、测试集群
+ 
+2.3.1、负载均衡访问nacos
+ 
+先启动mysql容器，然后启动三个nacos容器，最后启动nginx容器，在浏览器中输入http://192.1
+68.217.135:8080/nacos，查看页面显示结果
+输入用户名和密码（用户名和密码都是nacos），进入集群管理，查看节点列表，发现如下结果则
+说明集群搭建成功了。
+ 
+2.3.2、测试项目注册
+ 
+修改stock-nacos项目的bootstrap.yml文件，将注册地址和配置地址修改成nginx的地址，同样的
+将order-nacos也一样修改了。
+之所以配置192.168.217.135:8080是因为nginx安装到了IP地址为192.168.217.135的虚拟
+机。
+#docker cp 宿主级路径 容器名称:目标路径名称
+docker cp /root/nginx.conf my-nginx:/etc/nginx
+server:
+
+
+
+=== 第 38 页 ===
+
+启动项目stock-nacos，order-nacos项目，如果控制台没出错，查看http://192.168.217.135:808
+0/nacos地址下的服务列表，如果在服务列表中出现了这两个项目的应用名称，则说明注册成功。
+ 
+ 
+2.3.3、测试项目的数据交互
+ 
+在浏览器中输入http://localhost:8001/addOrder请求，用于检查消费者是否能收到提供者提供的
+数据，可以看出结果也是正常的。
+ 
+ 
+三、windows环境下搭建nacos集群
+ 
+3.1、创建数据库
+ 
+打开nacos，进入conf目录，找到mysql-schema.sql文件，将该文件的代码运行，从而创
+nacos_config数据库以及表。
+注意：原始的mysql-schema.sql文件要求mysql版本最低为5.7。
+datetime与timestamp的区别：
+5.7以前，datetime如果不给值，则默认值是null，timestamp如果不给值则默认
+值是当前时间CURRENT_TIMESTAMP
+5.7以后：datetime与timestamp是一样的，如果不给值，则默认值都是null.
+  port: 9001
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.217.135:8080
+      config:
+        server-addr: 192.168.217.135:8080
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+=== 第 39 页 ===
+
+/*
+ * Copyright 1999-2018 Alibaba Group Holding Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info   */
+/******************************************/
+CREATE TABLE `config_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) DEFAULT NULL,
+  `content` longtext NOT NULL COMMENT 'content',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `c_desc` varchar(256) DEFAULT NULL,
+  `c_use` varchar(64) DEFAULT NULL,
+  `effect` varchar(64) DEFAULT NULL,
+  `type` varchar(64) DEFAULT NULL,
+  `c_schema` text,
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfo_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='config_info';
+
+
+
+=== 第 40 页 ===
+
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_aggr   */
+/******************************************/
+CREATE TABLE `config_info_aggr` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `datum_id` varchar(255) NOT NULL COMMENT 'datum_id',
+  `content` longtext NOT NULL COMMENT '内容',
+  `gmt_modified` datetime NOT NULL COMMENT '修改时间',
+  `app_name` varchar(128) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfoaggr_datagrouptenantdatum` 
+(`data_id`,`group_id`,`tenant_id`,`datum_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='增加租户字段';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_beta   */
+/******************************************/
+CREATE TABLE `config_info_beta` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+  `beta_ips` varchar(1024) DEFAULT NULL COMMENT 'betaIps',
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfobeta_datagrouptenant` 
+(`data_id`,`group_id`,`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_beta';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_info_tag   */
+/******************************************/
+CREATE TABLE `config_info_tag` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `tag_id` varchar(128) NOT NULL COMMENT 'tag_id',
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL COMMENT 'content',
+
+
+
+=== 第 41 页 ===
+
+  `md5` varchar(32) DEFAULT NULL COMMENT 'md5',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  `src_user` text COMMENT 'source user',
+  `src_ip` varchar(50) DEFAULT NULL COMMENT 'source ip',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_configinfotag_datagrouptenanttag` 
+(`data_id`,`group_id`,`tenant_id`,`tag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_info_tag';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = config_tags_relation   */
+/******************************************/
+CREATE TABLE `config_tags_relation` (
+  `id` bigint(20) NOT NULL COMMENT 'id',
+  `tag_name` varchar(128) NOT NULL COMMENT 'tag_name',
+  `tag_type` varchar(64) DEFAULT NULL COMMENT 'tag_type',
+  `data_id` varchar(255) NOT NULL COMMENT 'data_id',
+  `group_id` varchar(128) NOT NULL COMMENT 'group_id',
+  `tenant_id` varchar(128) DEFAULT '' COMMENT 'tenant_id',
+  `nid` bigint(20) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`nid`),
+  UNIQUE KEY `uk_configtagrelation_configidtag` 
+(`id`,`tag_name`,`tag_type`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin 
+COMMENT='config_tag_relation';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = group_capacity   */
+/******************************************/
+CREATE TABLE `group_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `group_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Group ID，空字符表示整
+个集群',
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数，，0表示使用默认值',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_group_id` (`group_id`)
+
+
+
+=== 第 42 页 ===
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='集群、各Group
+容量信息表';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = his_config_info   */
+/******************************************/
+CREATE TABLE `his_config_info` (
+  `id` bigint(20) unsigned NOT NULL,
+  `nid` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `data_id` varchar(255) NOT NULL,
+  `group_id` varchar(128) NOT NULL,
+  `app_name` varchar(128) DEFAULT NULL COMMENT 'app_name',
+  `content` longtext NOT NULL,
+  `md5` varchar(32) DEFAULT NULL,
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `src_user` text,
+  `src_ip` varchar(50) DEFAULT NULL,
+  `op_type` char(10) DEFAULT NULL,
+  `tenant_id` varchar(128) DEFAULT '' COMMENT '租户字段',
+  `encrypted_data_key` text NOT NULL COMMENT '秘钥',
+  PRIMARY KEY (`nid`),
+  KEY `idx_gmt_create` (`gmt_create`),
+  KEY `idx_gmt_modified` (`gmt_modified`),
+  KEY `idx_did` (`data_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='多租户改造';
+/******************************************/
+/*   数据库全名 = nacos_config   */
+/*   表名称 = tenant_capacity   */
+/******************************************/
+CREATE TABLE `tenant_capacity` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `tenant_id` varchar(128) NOT NULL DEFAULT '' COMMENT 'Tenant ID',
+  `quota` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '配额，0表示使用默认
+值',
+  `usage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '使用量',
+  `max_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个配置大小上限，
+单位为字节，0表示使用默认值',
+  `max_aggr_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '聚合子配置最
+大个数',
+  `max_aggr_size` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个聚合数据
+的子配置大小上限，单位为字节，0表示使用默认值',
+  `max_history_count` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '最大变更
+历史数量',
+  `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时
+间',
+  `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时
+间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='租户容量信息
+表';
+CREATE TABLE `tenant_info` (
+
+
+
+=== 第 43 页 ===
+
+ 
+3.2、下载nacos安装包
+ 
+这里已经下载了naocs2.2.2，就不再下载了。
+将下载的nacos解压，并自己根据需要命名(nacos-cluster01)
+ 
+3.3、配置nacos
+ 
+3.3.1、配置startup.cmd
+ 
+下载完成以后直接解压nacos，注意/bin/startup.cmd文件中的默认配置就是集群模式，所以不需
+要调整，使用默认配置即可。
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `kp` varchar(128) NOT NULL COMMENT 'kp',
+  `tenant_id` varchar(128) default '' COMMENT 'tenant_id',
+  `tenant_name` varchar(128) default '' COMMENT 'tenant_name',
+  `tenant_desc` varchar(256) DEFAULT NULL COMMENT 'tenant_desc',
+  `create_source` varchar(32) DEFAULT NULL COMMENT 'create_source',
+  `gmt_create` bigint(20) NOT NULL COMMENT '创建时间',
+  `gmt_modified` bigint(20) NOT NULL COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_info_kptenantid` (`kp`,`tenant_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='tenant_info';
+CREATE TABLE `users` (
+    `username` varchar(50) NOT NULL PRIMARY KEY,
+    `password` varchar(500) NOT NULL,
+    `enabled` boolean NOT NULL
+);
+CREATE TABLE `roles` (
+    `username` varchar(50) NOT NULL,
+    `role` varchar(50) NOT NULL,
+    UNIQUE INDEX `idx_user_role` (`username` ASC, `role` ASC) USING BTREE
+);
+CREATE TABLE `permissions` (
+    `role` varchar(50) NOT NULL,
+    `resource` varchar(255) NOT NULL,
+    `action` varchar(8) NOT NULL,
+    UNIQUE INDEX `uk_role_permission` (`role`,`resource`,`action`) USING 
+BTREE
+);
+INSERT INTO users (username, password, enabled) VALUES ('nacos', 
+'$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
+INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+
+
+
+=== 第 44 页 ===
+
+3.3.2、配置application.properties
+ 
+进入conf目录，打开application.properties文件，因为nacos默认是内存模式存储的。如果是是
+单机模式使用，则使用内存模式就可以了（不需要进行任何修改），如果是集群模式，则需要将存
+储方式修改成保存到mysql中，只需要将如下的注释部分解开，进行调整就可以了。
+配置结果如下：
+注意修改数据库名称为：nacos_config，以及修改成自己的用户名和密码
+ 
+
+
+
+=== 第 45 页 ===
+
+ 
+ 
+3.4、配置集群
+ 
+3.4.1、配置cluster.conf
+ 
+进入conf目录，将cluster.conf.example改名为cluster.conf并打开，如果是部署在不同机器就要
+填写相应的IP地址加端口。
+注意：因为我们是在同一台机器上配置集群，所以IP地址是相同的，但是端口一定不能相
+同。
+注意：这里配置的时候必须使用真实IP地址，不要使用127.0.0.1，否则在启动服务消费者，
+调用服务提供者时会出错。
+注意：有些人在搭建集群的时候，可能端口不能连续，需要有间隔才能成功，例如：8847  
+8849   8851.
+ 
+ 
+3.4.2、复制nacos目录
+ 
+将nacos目录复制3份，必须停止nacos再复制，否则会报错
+### Default web server port:
+server.port=8848
+#使用外置mysql数据源的配置
+spring.datasource.platform=mysql
+### count of DB
+db.num=1
+###Connect URL of DB
+db.url.0=jdbc:mysql://192.168.217.133:3306/nacos_config?
+characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=
+true&useUnicode=true&useSSL=false&serverTimezone=UTC
+db.user.0=root
+db.password.0=Xiaoye
+
+
+
+=== 第 46 页 ===
+
+3.4.3、修改端口
+ 
+分别进入三个naocs文件中的conf目录，修改application.properties配置文件，更改端口号，与
+配置cluster.conf 时相对应。
+这里只以修改一个为例，其他两个一样修改，只要保证与cluster.conf文件中配置的端口一致
+即可。
+ 
+3.5、测试
+ 
+3.5.1、测试启动集群
+ 
+分别执行这三个nacos的/bin/startup.cmd文件，根据地址分别进入对应的nacos管理界面，如果
+出现如下图提示，则说明集群正常启动了。
+这里只以一张图为例，根据不同的端口，如果三个naocs关联界面都出现了如下图，则说明
+集群配置成功。
+ 
+ 
+3.5.2、测试项目注册
+ 
+3.5.2.1、修改全局配置文件
+ 
+修改order-web项目以及stock-service项目的全局配置文件，将服务注册地址改成集群的每一个地
+址，多个地址用逗号间隔。
+
+
+
+=== 第 47 页 ===
+
+修改order-web的全局配置文件
+修改stock-service的全局配置文件
+3.5.2.2、测试提供者与消费者
+ 
+启动order-web项目和stock-service项目，然后进入nacos的三个关联界面，如果都出现了如下图
+所示，则说明集群与各服务都能正常工作了。
+ 
+ 
+3.6、Nacos客户端信息缓存
+ 
+Nacos关闭以后，继续访问服务仍然可以使用。这是因为服务提供者，服务消费者本地都有缓存，
+保存注册中心的服务列表。
+Nacos不关闭，服务关闭。被调用过的服务也会存在在Nacos中一小会儿。这是因为不确定服务提
+供者与服务消费者的具体关闭原因，可能是因为网络问题导致无法识别，所以会保存一会。
+server:
+  port: 8001
+  tomcat:
+    uri-encoding: utf-8
+spring:
+  application:
+    name: order-web
+  cloud:
+    nacos:
+      discovery:
+      server-addr: 127.0.0.1:8847,127.0.0.1:8848,127.0.0.1:8849
+  main:
+  allow-bean-definition-overriding: true
+server:
+  port: 9001
+spring:
+  application:
+    name: stock-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8847,127.0.0.1:8848,127.0.0.1:8849
+
+
+
+=== 第 48 页 ===
+
+Nacos对于调用过的服务会有缓存，缓存到本地的内存中。可以降低Nacos的压力，后续的调用直
+接从缓存中返回结果。实现高可用性。
+ 
+
+

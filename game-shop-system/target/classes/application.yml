@@ -1,0 +1,55 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: game-shop-system
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  datasource:
+    url: jdbc:mysql://localhost:3306/onlineshop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+  mvc:
+    static-path-pattern: /uploads/**
+  web:
+    resources:
+      static-locations:
+        - classpath:/META-INF/resources/
+        - classpath:/resources/
+        - classpath:/static/
+        - classpath:/public/
+        - file:${file.upload.base-dir}/
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:/mappers/*.xml
+
+logging:
+  level:
+    com.baidu: INFO
+
+# 文件上传与AI可视化配置
+file:
+  upload:
+    base-dir: uploads
+
+python:
+  exec: C:/Users/Administrator/AppData/Local/Programs/Python/Python310/python.exe
+  scripts:
+    path: D:/ai/game-shop-cloud/game-shop-system/src/main/resources/python
+
+ollama:
+  base-url: http://127.0.0.1:11434
+  model: qwen2
+

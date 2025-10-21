@@ -1,0 +1,98 @@
+{
+  "root": "D:\\ai\\game-shop-cloud",
+  "out": "D:\\ai\\game-shop-cloud\\.pdf_out",
+  "count": 10,
+  "generated_at": "2025-10-15T20:48:22.532245",
+  "items": [
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程01：微服务概述.pdf",
+      "relative": "微服务阿里巴巴课程01：微服务概述.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程01：微服务概述",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程01：微服务概述\\题目.txt",
+      "pages": 26,
+      "image_count": 28,
+      "chars": 22379
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程02：nacos集群搭建.pdf",
+      "relative": "微服务阿里巴巴课程02：nacos集群搭建.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程02：nacos集群搭建",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程02：nacos集群搭建\\题目.txt",
+      "pages": 48,
+      "image_count": 70,
+      "chars": 50049
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程03：负载均衡.pdf",
+      "relative": "微服务阿里巴巴课程03：负载均衡.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程03：负载均衡",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程03：负载均衡\\题目.txt",
+      "pages": 14,
+      "image_count": 13,
+      "chars": 12266
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程04：feign用法.pdf",
+      "relative": "微服务阿里巴巴课程04：feign用法.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程04：feign用法",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程04：feign用法\\题目.txt",
+      "pages": 7,
+      "image_count": 3,
+      "chars": 8714
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程05：nacos-config配置中心.pdf",
+      "relative": "微服务阿里巴巴课程05：nacos-config配置中心.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程05：nacos-config配置中心",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程05：nacos-config配置中心\\题目.txt",
+      "pages": 22,
+      "image_count": 37,
+      "chars": 20427
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程06：sentinel应用一.pdf",
+      "relative": "微服务阿里巴巴课程06：sentinel应用一.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程06：sentinel应用一",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程06：sentinel应用一\\题目.txt",
+      "pages": 15,
+      "image_count": 19,
+      "chars": 11731
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程07：sentinel应用二.pdf",
+      "relative": "微服务阿里巴巴课程07：sentinel应用二.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程07：sentinel应用二",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程07：sentinel应用二\\题目.txt",
+      "pages": 31,
+      "image_count": 50,
+      "chars": 18012
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程08：sentinel应用三.pdf",
+      "relative": "微服务阿里巴巴课程08：sentinel应用三.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程08：sentinel应用三",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程08：sentinel应用三\\题目.txt",
+      "pages": 31,
+      "image_count": 50,
+      "chars": 21959
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程10：GateWay网关.pdf",
+      "relative": "微服务阿里巴巴课程10：GateWay网关.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程10：GateWay网关",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程10：GateWay网关\\题目.txt",
+      "pages": 21,
+      "image_count": 25,
+      "chars": 18074
+    },
+    {
+      "pdf": "D:\\ai\\game-shop-cloud\\微服务阿里巴巴课程12：nginx应用.pdf",
+      "relative": "微服务阿里巴巴课程12：nginx应用.pdf",
+      "out_dir": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程12：nginx应用",
+      "text_file": "D:\\ai\\game-shop-cloud\\.pdf_out\\微服务阿里巴巴课程12：nginx应用\\题目.txt",
+      "pages": 3,
+      "image_count": 9,
+      "chars": 1386
+    }
+  ]
+}

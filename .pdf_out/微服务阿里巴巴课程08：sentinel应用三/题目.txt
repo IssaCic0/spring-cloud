@@ -1,0 +1,940 @@
+=== 第 1 页 ===
+
+微服务阿里巴巴课程08：sentinel应用三
+ 
+一、熔断降级规则
+ 
+除了流量控制以外，对调用链路中不稳定的资源进行熔断降级也是保障高可用的重要措施之一。我
+们需要对不稳定的弱依赖服务调用进行熔断降级，暂时切断不稳定调用，避免局部不稳定因素导致
+整体的雪崩。
+熔断降级作为保护自身的手段，通常在客户端（消费者）进行配置。
+ 
+1.1、熔断指标
+ 
+我们通常用以下几种方式来衡量资源是否处于稳定的状态：
+平均响应时间(DEGRADE_GRADE_RT): 当1s内持续发出N个请求，对应时刻的平均响应时间
+（秒级）都超过阈值(count,以ms为单位)，那么在接下来的时间（DegradeRule中的
+timeWindow,以s为单位）之内，对这个方法的调用都自动熔断.
+异常比例（DEGRADE_GRADE_EXCEPTION_RATIO）:当资源的每秒请求量 >=N(可配置)，并
+且每秒异常总数占通过量的比例超过阈值之后，资源进入降级状态，在接下来的时间内，对
+这个方法自动返回。异常比率的阈值范围是 [0.0, 1.0]，代表 0% - 100%。
+异常数（DEGRADE_GRADE_EXCEPTION_COUNT）: 当资源近1分钟的异常数目超过阈值之
+后会进行熔断。注意由于统计时间是分钟级别的，如果timeWindow小于60s，则结束熔断状
+态后可能继续接入熔断状态
+ 
+1.2、熔断策略
+ 
+服务降级的熔断策略有三种：1、慢调用比例。2、异常比例。3、异常数。
+如果发生了服务降级，则会抛出 DegradeException 异常。
+1.2.1、慢调用比例
+ 
+发生熔断的条件：发生慢调用的请求数量>=最小请求数比例阈值，并且请求数量必须大于最小请
+求数量。
+需要配置的相关参数：
+最大RT：单位毫秒，表示当前请求允许的最大响应时间，超过这个时间则是慢调用。
+比例阈值：取值范围在0--1之间，表示发生慢调用的比例
+
+
+
+=== 第 2 页 ===
+
+熔断时长：即熔断触发后持续的时间。资源进入熔断状态后，在配置的熔断时长内，请求都
+会快速失败。
+当超过熔断时长以后，此时熔断器处于半开状态，此状态下可以尝试接收一个请求进行
+处理，如果还是发生了慢调用，则立即又进入熔断状态，如果能正常服务，则熔断器关
+闭，回复正常调用状态。
+最小请求数：触发熔断的最小请求数目，若当前统计窗口内的请求数小于此值（10个/秒），
+即使达到熔断条件规则也不会触发
+ 
+1.2.1.1 创建控制器
+ 
+在order-sentinel项目中创建控制器DegradeController，代码如下：
+1.2.1.2 配置慢调用降级
+ 
+针对/degrade/degradeThread请求，配置慢调用降级：
+package com.baidu.controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/degrade")
+public class DegradeController {
+    //测试慢调用
+    @RequestMapping("/degradeThread")
+    public String degradeThread(){
+        try {
+            //使线程睡眠2秒
+            Thread.sleep(2000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return "提供了正常服务，没有发送慢调用";
+    }
+}
+
+
+
+=== 第 3 页 ===
+
+ 
+ 
+1.2.1.3 测试功能
+ 
+因为要想发生满调用熔断，需要快速发出10个请求，并且在这10个请求中至少有一个的处理时长
+超过1000毫秒，所以我们需要借助JMeter软件发出http://localhost:8005/degrade//degradeThre
+ad请求。注意添加查看结果的监听器，
+设置线程组，在11秒内发送100个请求，从而实现有10个请求，在1秒钟之内有请求没有完成
+设置请求，具体设置如下：
+
+
+
+=== 第 4 页 ===
+
+设置查看结果的监听器。
+ 
+在运行 JMeter 的线程以后，我们自己在浏览器中输入：http://localhost:8005/degrade//degrad
+eThread请求，查看页面效果：
+从结果可以看出：执行了统一异常处理，发生了熔断。
+ 
+1.2.2、异常比例
+ 
+发生熔断的条件：发生异常调用的请求数量>=最小请求数比例阈值。，并且请求数量必须大于最
+小请求数量
+需要配置的相关参数：
+比例阈值：取值范围在0--1之间，表示发生异常调用的比例
+熔断时长：即熔断触发后持续的时间。资源进入熔断状态后，在配置的熔断时长内，请求都
+会快速失败。
+当超过熔断时长以后，此时熔断器处于半开状态，此状态下可以尝试接收一个请求进行
+处理，如果还是发生了慢调用，则立即又进入熔断状态，如果能正常服务，则熔断器关
+
+
+
+=== 第 5 页 ===
+
+闭，回复正常调用状态。
+最小请求数：触发熔断的最小请求数目，若当前统计窗口内的请求数小于此值（5个/秒），即使达
+到熔断条件规则也不会触发
+ 
+1.2.2.1 创建控制器
+ 
+修改DegradeController控制器，在该控制器中添加用于测试异常比例熔断的请求，代码如下：
+ 
+1.2.2.2 配置异常比例降级
+ 
+针对/degrad0e/degradeException请求配置异常比例条件：
+//测试异常比例
+@RequestMapping("/degradeException")
+public String degradeException(){
+    //发生除零异常
+    int a= 10/0;
+    return "没有发生异常比例";
+}
+
+
+
+=== 第 6 页 ===
+
+ 
+1.2.2.3 测试功能
+ 
+直接在浏览器中输入http://localhost:8005/degrade/degradeException请求，查看页面，会发现
+出现500错误，结果如下：
+出现上述结果是正常的，多刷新几次请求，会发现如下结果：
+ 
+1.2.3、异常数
+ 
+发生熔断的条件：发生异常调用的请求数量>=异常数，并且请求数量必须大于最小请求数量。
+需要配置的相关参数：
+异常数：表示发生异常调用的数量，当数量达到这个值以后，则执行熔断。
+熔断时长：即熔断触发后持续的时间。资源进入熔断状态后，在配置的熔断时长内，请求都
+会快速失败。
+当超过熔断时长以后，此时熔断器处于半开状态，此状态下可以尝试接收一个请求进行
+处理，如果还是发生了慢调用，则立即又进入熔断状态，如果能正常服务，则熔断器关
+
+
+
+=== 第 7 页 ===
+
+闭，回复正常调用状态。
+最小请求数：触发熔断的最小请求数目，若当前统计窗口内的请求数小于此值（2个/秒），即使达
+到熔断条件规则也不会触发
+ 
+1.2.3.1 创建控制器
+ 
+修改控制器DegradeController，添加处理degradeNum请求的方法，代码如下：
+ 
+1.2.3.2 配置异常数降级
+ 
+针对/degrade/degradeNum请求，配置异常数降级
+//测试异常数
+@RequestMapping("/degradeNum")
+public String degradeNum(){
+    //发生除零异常
+    int a=10/0;
+    return "没有发生异常数熔断";
+}
+
+
+
+=== 第 8 页 ===
+
+ 
+1.2.3.3 测试功能
+ 
+直接在浏览器中输入http://localhost:8005/degrade/degradeNum请求，查看页面，会发现出现
+500错误，结果如下：
+出现上述结果是正常的，多刷新几次，可以看到如下结果：从结果可以看出，已经发生了熔断。
+二、sentinel整合openfeign实现降级服务
+ 
+sentinel整合openfeign实现降级服务：当请求发生熔断以后，会抛出对应的异常，从而去执行统
+一异常处理，这样的处理并不友好，我们可以结合openfeign，使请求执行相应的降级服务方法，
+这样可以更友好的提供提示信息。
+
+
+
+=== 第 9 页 ===
+
+ 
+2.1、实现sentinel整合openfeign
+ 
+2.1.1、创建项目
+ 
+目前项目已经实现了与openfeign的整合，所以不需要重新创建项目。
+2.1.1.1 创建提供者
+ 
+创建服务提供者项目product-service。
+
+
+
+=== 第 10 页 ===
+
+在pom.xml中添加依赖
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>product-service</artifactId>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <!--排除掉配置中心的依赖-->
+            <exclusions>
+
+
+
+=== 第 11 页 ===
+
+在resources目录下创建application.yml文件，并进行如下配置：
+ 
+创建com.baidu包，并在 该包下创建SpringBoot的启动器
+ 
+在控制器ProductController中添加testDegrade请求，用于测试异常降级
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>mybatis-plus-boot-starter</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba.cloud</groupId>
+                    <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>
+server:
+  port: 9004
+spring:
+  application:
+    name: product-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
+public class ProductServiceApplication9004 {
+    public static void main(String[] args) {
+        SpringApplication.run(ProductServiceApplication9004.class,args);
+    }
+}
+package com.baidu.controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/product")
+public class ProductController {
+
+
+
+=== 第 12 页 ===
+
+测试服务提供者的请求：
+在浏览器中输入：http://localhost:9004/product/testDegrade请求，查看页面显示异常结
+果（出现这种结果是正常的）。
+查看product-service项目的控制台，查看如下结果，发现如下结果也是正常的
+ 
+2.1.1.2 创建消费者
+ 
+创建项目（sentinel-openfeign）用于表示服务消费者，实现通过openfeign调用product-service
+的服务提供者。
+    
+    //测试异常降级
+    @RequestMapping("/testDegrade")
+    public String testDegrade(){
+        System.out.println("product-service项目测试testDegrade请求");
+        int a=10/0;  //发生异常
+        return "正常调用，没有发生异常";
+    }
+}
+
+
+
+=== 第 13 页 ===
+
+在pom.xml文件中配置依赖
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.baidu</groupId>
+        <artifactId>springcloud-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>sentinel-openfeign</artifactId>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+   <dependencies>
+        <!--配置sentinel的启动器-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
+        <!--引入公共模块-->
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>common-api</artifactId>
+
+
+
+=== 第 14 页 ===
+
+在resources目录下创建application.yml文件，具体代码如下：
+创建com.baidu包，并在该包下创建SpringBoot的启动器
+创建com.baidu.service包，并在该包下创建ProductFeignService接口，用于将请求发送到提供
+者。
+            <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>mybatis-plus-boot-starter</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba.cloud</groupId>
+                    <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>
+server:
+  port: 8006
+spring:
+  application:
+    name: sentinel-openfeign
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+  main:
+    allow-bean-definition-overriding: true
+package com.baidu;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+@SpringBootApplication
+@EnableFeignClients
+public class SentinelOpenfeignApplication8006 {
+    public static void main(String[] args) {
+        SpringApplication.run(SentinelOpenfeignApplication8006.class,args);
+    }
+}
+
+
+
+=== 第 15 页 ===
+
+创建控制器：调用提供者的方法，结果被调用的方法发生了异常。
+ 
+2.1.1.3 测试异常传播行为
+ 
+启动提供者（product-service），启动消费者（sentinel-openfeign），在浏览器中输入http://lo
+calhost:8006/testOrderDegrade请求，查看页面结果：
+package com.baidu.service;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestMapping;
+@FeignClient(value = "product-service",path = "/product")
+public interface ProductFeignService {
+    
+    //测试异常降级
+    @RequestMapping("/testDegrade")
+    public String testDegrade();
+}
+package com.baidu.controller;
+import com.baidu.service.ProductFeignService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/ProductFeign")
+public class ProductFeignController {
+    @Autowired(required = false)
+    private ProductFeignService productFeignService;
+    //接收请求。调用提供者的方法，结果被调用的方法发生了异常。
+    @RequestMapping("/testOrderDegrade")
+  public String testOrderDegrade(){
+        String res=productFeignService.testDegrade();
+        return res;
+    }
+}
+
+
+
+=== 第 16 页 ===
+
+查看消费者控制台，会发现出现了异常：
+查看提供者控制台，会发现也出现了异常：
+之所以提供者和消费者都出现了异常，那是因为提供者无法提供正常服务，从而导致消费者也无法
+正常完成线程任务。
+ 
+2.1.2、实现整合
+ 
+2.1.2.1 配置消费者的依赖
+ 
+因为降级服务都是写消费端（消费者）的，我们在消费端配置sentinel的依赖，即配置sentinel-
+openfeign项目的pom.xml文件。
+<!--配置sentinel的启动器-->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--配置sentinel的启动器-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+
+
+
+=== 第 17 页 ===
+
+ 
+2.1.2.2 修改消费者全局配置文件
+ 
+在全局配置文件中添加feign对sentinel的支持。
+配置feign.sentinel.enabled=true，默认是false
+ 
+2.1.2.3 配置降级服务处理类
+ 
+创建com.baidu.feign.impl包，在该包下创建降级服务处理类（ProductFeignServiceImpl），该
+类必须实现ProductFeignService接口，代码如下：
+注意添加@Component注解，将该类标记为spring的Bean。
+            </exclusion>
+            <exclusion>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-
+config</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+server:
+  port: 8006
+spring:
+  application:
+    name: sentinel-openfeign
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8888
+  main:
+    allow-bean-definition-overriding: true
+#配置feign对sentinel的支持
+feign:
+  sentinel:
+    enabled: true
+
+
+
+=== 第 18 页 ===
+
+注意：这里的实现类配置成Bean以后，在控制器中注入ProductFeignService接口的值时会
+报错，这个可以不用管。
+ 
+2.1.2.4 修改openfeign接口
+ 
+在@FeignClient注解中添加fallback属性，用于指向降级服务处理类，表示当发生降级以后，执行
+该类中对应的降级服务处理方法。
+ 
+2.1.2.5 测试降级服务
+ 
+启动提供者（product-service），然后在启动消费者（sentinel-openfeign），在浏览器中输入ht
+tp://localhost:8006/ProductFeign/testOrderDegrade请求，查看页面结果：
+从结果可以看出执行了降级服务处理方法。在消费者的控制台是没有出现异常的。而提供者
+的控制台出现了除零异常，这是属于正常现象。
+package com.baidu.service.impl;
+import com.baidu.service.ProductFeignService;
+import org.springframework.stereotype.Component;
+@Component
+public class ProductFeignServiceImpl implements ProductFeignService {
+    //测试降级服务
+    public String testDegrade(){
+        return "发生了熔断，现在执行的是服务降级处理方法";
+    }
+}
+@Autowired(required = false)
+private ProductFeignService productFeignService;
+package com.baidu.service;
+import com.baidu.service.impl.ProductFeignServiceImpl;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestMapping;
+@FeignClient(value = "product-service",path = "/product",fallback = 
+ProductFeignServiceImpl.class)
+public interface ProductFeignService {
+    //测试异常降级
+    @RequestMapping("/testDegrade")
+    public String testDegrade();
+}
+
+
+
+=== 第 19 页 ===
+
+ 
+三、热点参数流控
+ 
+3.1、基本概念
+ 
+热点参数流控：又叫热点参数限流，它会统计传入参数中的热点参数，并根据配置的限流阈值与模
+式，对包含热点参数的资源调用进行限流。热点参数限流可以看做是一种特殊的流量控制，仅对包
+含热点参数的资源调用生效。
+注意：热点参数流控必须结合@SentinelResource注解使用，针对方法进行配置，如果针对
+请求进行配置是没有效果的。
+ 
+3.2、具体实现
+ 
+3.2.1、创建控制器
+ 
+我们进入order-sentinel项目，创建控制器（HotController），在控制器中添加带参数的请求方
+法，代码如下：
+package com.baidu.controller;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/hot")
+public class HotController {
+    
+    @RequestMapping("/testHot/{id}")
+    @SentinelResource(value="/testHot",blockHandler = "MyBlockHandler")
+    public String myTestHot(@PathVariable("id")Integer id){
+        System.out.println("正常访问hot参数：id:"+id);
+        return "正常访问hot参数：id:"+id;
+    }
+
+
+
+=== 第 20 页 ===
+
+ 
+3.2.2、配置热点参数流控规则
+ 
+启动order-sentinel项目，在浏览器中发出http://localhost:8005/hot/testHot/1请求，进入
+sentinel控制台，对/testHot请求的子选项进行配置热点流控规则如下：
+参数索引：表示在控制器中，需要设置流控的参数的下标位置，下标从0开始。
+单机阈值：单机阈值表示一秒钟内发送的QPS请求数量。
+1、如果参数大部分值都是热点参数，那单机阈值就主要针对热点参数进行流控。后续
+额外针对普通参数值进行流控。
+2、如果大部份值都是普通流量，那单机阈值就主要针对普通流量进行流控。后续额外
+针对热点参数值进行流控。
+注意：根据id查询，一般都属于普通流量。
+统计窗口时长：表示在配置的时间内统计总共有多少个QPS请求。
+    public String MyBlockHandler(Integer id, BlockException e){
+        return "热点异常处理";
+    }
+}
+
+
+
+=== 第 21 页 ===
+
+设置热点参数限流，只有在上面的热点规则配置以后，我们点击编辑，就可以对需要额外配
+置的热点参数进行限流配置：
+下面的配置表示对id=1的请求，当达到2个以上的时候就会进行限流。
+注意：在配置完成以后，一定要点击添加，这样配置的参数才会保存下来。
+ 
+3.2.3、测试功能
+ 
+测试热点流控(如果热点流控规则编辑以后没有保存，所以无法正常查看到如下结果)
+在浏览器中连续发起三个以上http://localhost:8005/hot/testHot/1请求，查看页面效果如
+下：
+ 
+测试普通流控
+因为个人手速问题，我们很难在1秒钟之内发送10个以上请求，所以我们需要借助JMeter进
+行测试
+首先创建线程组，然后配置在15秒中之内发送300个线程。
+
+
+
+=== 第 22 页 ===
+
+在线程组中能添加http请求，设置请求路径为/testHot/2，这里设置的id=2不属于热点
+流控，只是普通的QPS流控。
+创建监听器，查看结果树，执行保存以后进行运行。从结果可以看出当普通参数达到
+10/秒以后，也会被流控。
+ 
+四、系统规则（无法看到效果）
+ 
+4.1、配置系统规则的原因
+ 
+容量评估不到位，某个大流量接口限流配置不合理或配有配置，导致系统崩溃，来不及进行处理。
+突然发现机器的Load和CPU的利用率等快速飙高，但却没有办法很快的确认具体原因，从而来不
+及处理。
+当其中一台机器挂了之后，本该由这台机器处理的流量被负载均衡到另外的机器上，另外的机器也
+被打挂了，引起系统雪崩。
+希望有一个全局的兜底防护，即使缺乏容量评估也有一定的保护机制。
+ 
+
+
+
+=== 第 23 页 ===
+
+4.2、配置系统规则
+ 
+直接进入sentinel控制台的系统规则，点击新增系统规则，可以查看到如下界面：
+LOAD：仅linux系统有效，表示自适应系统保护（了解即可）
+RT：当单台机器上所有入口流量的并发线程达到阈值就触发系统保护。
+入口QPS：当单台机器上所有入口流量的QPS达到阈值就触发系统保护。
+CPU使用率：当系统CPU使用率超过阈值就触发系统保护，取值范围在0.0--1.0之间。
+ 
+4.3、测试功能
+ 
+4.3.1、测试CPU使用率
+ 
+先观察自己处理器的占用率，配置一个值，使该值小于当前处理器的占用率。
+启动order-sentinel项目，在浏览器中输入一个请求（随便一个可以访问到控制器的请求都可
+以）：http://localhost:8001/testHot/1
+查看页面显示效果，发现执行了统一异常处理。
+4.3.2、测试入口QPS
+ 
+设置入口QPS的阈值：
+注意：这里设置的2并不表示系统接收两个请求以后就触发阈值，而是要达到系统平均接收到
+的请求达到2个以后才会触发。
+
+
+
+=== 第 24 页 ===
+
+启动order-sentinel项目，在浏览器中输入一个请求（随便一个可以访问到控制器的请求都可
+以），多刷新几次，查看结果：
+注意这里的结果并没有执行统一异常处理，而是执行了自己配置的降级处理，这也是正常
+的。
+ 
+五、规则持久化
+ 
+目前为止，我们配置的规则信息，当重启项目以后，配置的规则都丢失了，这是因为我们配置的规
+则都保存在内存中，但是当项目正式发布运行以后，这种情况是不被允许的。
+实现持久化的三种模式：
+5.1、原始模式
+ 
+如果不做任何修改，Dashboard 的推送规则方式是通过 API 将规则推送至客户端并直接更新到内
+存中。
+这种模式的好处就是简单，无依赖，坏处就是应用重启以后规则就会消失，仅用于简单测试，不能
+用于生产环境。
+
+
+
+=== 第 25 页 ===
+
+ 
+ 
+5.2 、拉模式(pull)
+ 
+Sentinel的pull模式是一种规则管理模式，它允许Sentinel客户端从本地文件、数据库或远程配置
+中心等数据源中定期拉取规则配置，并更新本地缓存。（了解即可）
+ 
+ 
+5.3、推送模式（push)：
+ 
+Sentinel的push模式是一种规则推送模式，在nacos的配置中心配置规则，然后推送给sentinel的
+控制台。并由Sentinel客户端监听这些配置中心的变化，从而实时更新本地配置规则。
+
+
+
+=== 第 26 页 ===
+
+ 
+5.4、推送模式的实现
+ 
+基于nacos配置中心控制台实现推送模式原理简介：
+首先在nacos配置中心添加对应流控规则的配置。然后由nacos配置中心推送给sentinel的控
+制台。
+Sentinel客户端链接Nacos，获取规则配置；并监听Nacos配置变化，如发生变化，就更新本
+地缓存（从而让本地缓存总是和Nacos一致）
+以order-sentinel项目作为案例，进行如下调整：
+5.4.1 引入依赖
+ 
+添加sentinal与nacos的依赖
+sentinel-datasource-nacos 是 Sentinel 为 Nacos 扩展的数据源模块，允许将规则数据存储
+在 Nacos 配置中心，在微服务启动时利用该模块 Sentinel 会自动在 Nacos下载对应的规则
+数据。
+
+
+
+=== 第 27 页 ===
+
+完整依赖如下：
+注意：这里不能排除掉nacos配置中心的依赖
+ 
+5.4.2 配置流控信息
+ 
+我们在nacos配置中心配置的流控规则，主要用到如下属性：
+resource：资源名，即限流规则的作用对象
+count：限流阈值
+grade：限流阈值类型（QPS或并发线程数）
+limitApp：流控针对的调用来源，若为default则不区分调用来源。（也就是命名空间配置 ，
+默认default）
+stategy：调用关系限流策略
+controlBehavior：流量控制效果（直接拒绝、WarmUP、匀速排队）
+进入nacos的控制台，进入配置管理--->配置列表，点击加号或新建配置：
+<dependency>    
+    <groupId>com.alibaba.csp</groupId>  
+    <artifactId>sentinel-datasource-nacos</artifactId>  
+</dependency>
+<properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+    <!--配置sentinel的启动器-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+    </dependency>
+    <!--配置sentinel整合nacos的数据源-->
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-datasource-nacos</artifactId>
+    </dependency>
+    <!--引入公共模块-->
+    <dependency>
+        <groupId>com.baidu</groupId>
+        <artifactId>common-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+
+
+
+=== 第 28 页 ===
+
+配置的json格式文档如下：DataId为：order-sentinel-flow-rule
+注意：下面配置，因为json格式无法识别注释，所以在使用的时候不要带注释，否则会报
+错。
+ 
+在配置中心的test命名空间中创建如下配置（更换别的命名空间也可以）
+ 
+[
+    {
+        "resource":"/sentinel/flow",#资源名，说明对那个URI进行流控
+        "count":2, #超过2个QPS限流将被限流
+        "grade":1, #类型 0-线程 1-QPS
+        "limitApp":"default", #命名空间，默认default
+        "strategy":0, #限流策略: 0-直接 1-关联 2-链路
+        "controlBehavior":0, #控制行为: 0-快速失败 1-WarmUp 2-排队等待
+        "clusterMode":false #是否集群模式
+    }
+]
+
+
+
+=== 第 29 页 ===
+
+5.4.3 修改全局配置文件
+ 
+将application.yml中的配置全部注释掉。
+创建bootstrap.yml文件，添加对应配置
+注意修改应用名称spring.application.name=order-sentinel，这里的应用名称可以不用和
+DataId相同。
+一个项目可以配置多个流控规则，一个流控规则就是一个文件，如果同名了，那就没办
+法读取多个文件。
+下面配置需要手动书写：
+如果开启了权限，则一定要配置用户名和密码，如果没有开启，可以不用配置。
+完整的bootstrap.yml配置如下：
+spring:
+  cloud:
+    sentinel:
+      datasource:
+        mytest: #数据源名称，可以自定义,如果是流控规则，建议取名flow
+          nacos:
+            server-addr: 127.0.0.1:8848
+            namespace: d43361e8-7f29-45ff-8f27-36b1954fae93
+            data-id: order-sentinel-flow-rule
+            group-id: DEFAULT_GROUP
+            rule-type: flow
+            username: nacos
+            password: nacos
+server:
+  port: 8005
+spring:
+  application:
+    name: order-sentinel
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+      username: nacos
+      password: nacos
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8888
+      eager: true #取消sentinel控制台的懒加载
+      datasource:
+        mytest: #数据源名称，可以自定义,如果是流控规则，建议取名flow
+          nacos:
+            server-addr: 127.0.0.1:8848
+            namespace: d43361e8-7f29-45ff-8f27-36b1954fae93
+            data-id: order-sentinel-flow-rule
+            group-id: DEFAULT_GROUP
+            rule-type: flow
+            username: nacos
+            password: nacos
+
+
+
+=== 第 30 页 ===
+
+ 
+下面是各种流控规则的yml配置参考模板：
+ 
+5.4.4 查看控制器请求
+ 
+查看控制器的flow请求，代码如下：
+  main:
+    allow-bean-definition-overriding: true
+spring: 
+  cloud:    
+    sentinel:   
+      datasource:   
+        # 名称随意  
+        flow:   
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-flow-rules  
+            group-id: SENTINEL_GROUP    
+            # 规则类型，取值见： 
+            # org.springframework.cloud.alibaba.sentinel.datasource.RuleType 
+            rule-type: flow 
+        degrade:    
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-degrade-rules   
+            group-id: SENTINEL_GROUP    
+            rule-type: degrade  
+        system: 
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-system-rules    
+            group-id: SENTINEL_GROUP    
+            rule-type: system   
+        authority:  
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-authority-rules 
+            group-id: SENTINEL_GROUP    
+            rule-type: authority    
+        param-flow: 
+          nacos:    
+            server-addr: localhost:8848 
+            data-id: ${spring.application.name}-param-flow-rules    
+            group-id: SENTINEL_GROUP    
+            rule-type: param-flow
+
+
+
+=== 第 31 页 ===
+
+flow请求针对限流结果，执行统一限流处理。
+ 
+5.4.5、测试结果
+ 
+先启动nacos，再启动sentinel，最后启动order-sentinel项目，进入sentinel控制台，查看流控规
+则，发现规则已经被nacos推送过来了。
+在360浏览器中输入请求http://localhost:8005/sentinel/flow，查看结果：
+多刷新几次，查看流控结果：发现已经限流成功了，也说明我们在nacos中配置的持久化流控信息
+生效了。
+ 
+@RequestMapping("flow")
+//  @SentinelResource(value = "flow",blockHandler = "flowBlockHandler")
+public String flow(){
+    return "flow test!!!";
+}
+
+

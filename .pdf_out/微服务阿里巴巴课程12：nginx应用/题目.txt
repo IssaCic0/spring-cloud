@@ -1,0 +1,73 @@
+=== 第 1 页 ===
+
+微服务阿里巴巴课程12：nginx应用
+ 
+一、配置网关，搭建集群
+ 
+通过复制项目的方式或者创建新项目的方式，配置三台网关，从而组成集群。
+注意：建立网关集群的方式与建立服务提供者集群的方式类似，都不需要彼此之间通讯，但
+是需要保证服务名称一致。
+通过访问网关（不同的网关，端口不一样）,发送请求，查看结果：例如访问：http://localhost:99
+99/order-web/order/addOrder
+用同样的方式检查另外两个网关是否正确
+二、安装并配置nginx
+ 
+这里在windows环境下，使用nginx反向代理服务器，实现通过nginx将请求转发到网关，通过网
+关将请求转发到服务消费者，通过消费者调用服务提供者集群，最终将结果响应给用户。
+1、解压nginx
+ 
+将nginx-1.18.0.zip解压到硬盘指定位置，文件结构如下：
+
+
+
+=== 第 2 页 ===
+
+2、配置nginx.conf
+ 
+进入nginx的conf/nginx.conf目录，将配置信息调整如下：
+注意：这里访问nginx服务器的端口设置的是10000（注意：有些人用10000端口可能无法正
+常发送请求，此时可以换一个端口，例如换成10001试试）.
+注意：如果这里配置的localhost无法识别，则使用127.0.0.1
+注意：每一行结束的时候必须带上分号，键与值之间可以只要一个空格键的距离
+    #配置内部服务器列表
+    upstream myList{
+        server localhost:9997;
+        server localhost:9998;
+        server localhost:9999;
+        ip_hash;  #负载均衡策略使用ip地址的hash策略
+    }
+    
+    server {
+        listen       10000;
+        server_name  localhost;
+        location / {
+            root   html;
+            index  index.html index.htm;
+            proxy_pass http://myList;
+        }
+        。。。。。。。。。。。。。。
+    }
+
+
+
+=== 第 3 页 ===
+
+  
+ 
+3、启动nginx
+ 
+进入nginx安装路径，找到nginx.exe文件所在路径。进入cmd，通过start  nginx.exe命令启动
+nginx
+使用命令行启动 start nginx.exe
+启动以后会有一个一闪而过的效果
+不要直接双击nginx.exe，这样会导致修改配置后重启、停止nginx无效，需要手动关闭任务
+管理器内的所有nginx进程
+在浏览器中输入http://localhost，查看运行结果
+4、测试实现
+ 
+在浏览器中输入http://localhost:10001/order-web/order/addOrder请求，通过刷新页面，发现
+请求通过nginx代理服务器，都已经正常跳转到了网关，并获取到了响应。
+ 
+ 
+
+

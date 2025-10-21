@@ -1,0 +1,14 @@
+com\baidu\product\mapper\ProductMapper.class
+com\baidu\product\controller\ProductsController.class
+com\baidu\product\ProductApplication8082.class
+com\baidu\product\service\CategoryService.class
+com\baidu\product\mapper\CategoryMapper.class
+com\baidu\product\controller\CategoriesController$AdminUpsertRequest.class
+com\baidu\product\controller\CategoriesController.class
+com\baidu\product\service\ProductService.class
+com\baidu\product\controller\ProductsController$ProductCreateRequest.class
+com\baidu\product\service\impl\CategoryServiceImpl.class
+com\baidu\product\entity\ProductStatus.class
+com\baidu\product\entity\Category.class
+com\baidu\product\entity\Product.class
+com\baidu\product\service\impl\ProductServiceImpl.class

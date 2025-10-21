@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="game-shop-common" />
+        <module name="game-shop-product" />
+        <module name="game-shop-shop" />
+        <module name="game-shop-user" />
+        <module name="game-shop-order" />
+        <module name="game-shop-gateway" />
+        <module name="game-shop-payment" />
+        <module name="game-shop-api" />
+        <module name="game-shop-system" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="game-shop-ai" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="game-shop-ai" options="-parameters" />
+      <module name="game-shop-api" options="-parameters" />
+      <module name="game-shop-common" options="-parameters" />
+      <module name="game-shop-gateway" options="-parameters" />
+      <module name="game-shop-order" options="-parameters" />
+      <module name="game-shop-payment" options="-parameters" />
+      <module name="game-shop-product" options="-parameters" />
+      <module name="game-shop-shop" options="-parameters" />
+      <module name="game-shop-system" options="-parameters" />
+      <module name="game-shop-user" options="-parameters" />
+    </option>
+  </component>
+</project>
